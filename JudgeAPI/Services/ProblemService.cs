@@ -37,12 +37,12 @@ namespace JudgeAPI.Services
         // POST problem
         public async Task<ProblemResponseDTO> CreateAsync(ProblemCreateDTO dto)
         {
-            var unit = _mapper.Map<Problem>(dto);
+            var problem = _mapper.Map<Problem>(dto);
 
-            _appDbContext.Add(unit);
+            _appDbContext.Add(problem);
             await _appDbContext.SaveChangesAsync();
-
-            return _mapper.Map<ProblemResponseDTO>(unit);
+            var mapping = _mapper.Map<ProblemResponseDTO>(problem);
+            return mapping;
         }
 
         // GET by id

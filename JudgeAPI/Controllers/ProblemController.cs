@@ -1,11 +1,13 @@
 ﻿using JudgeAPI.Models;
 using JudgeAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JudgeAPI.Controllers
 {
     [ApiController]
     [Route("api/units/{unitId}/problems")]
+    [Authorize]
     public class ProblemController : ControllerBase
     {
         private readonly IProblemService _problemService;
@@ -17,6 +19,7 @@ namespace JudgeAPI.Controllers
             _problemService = problemService;
         }
 
+        // --- GET ALL PROBLEMS BY UNIT ---
         [HttpGet(Name = "GetAllProblems")]
         public async Task<ActionResult<UnitWithProblemsDTO>> GetByUnit(int unitId)
         {
@@ -24,6 +27,7 @@ namespace JudgeAPI.Controllers
             return Ok(response);
         }
 
+        // --- GET PROBLEM BY UNIT AND ID ---
         [HttpGet("{id:int}", Name = "GetProblem")]
         public async Task<ActionResult<ProblemResponseDTO>> GetProblem(int id)
         {
@@ -31,14 +35,16 @@ namespace JudgeAPI.Controllers
             return Ok(problem);
         }
 
+        // --- POST PROBLEM BY UNIT
         [HttpPost]
         public async Task<ActionResult<ProblemResponseDTO>> Post(int unitId, [FromBody]ProblemCreateDTO dto)
         {
             dto.UnitId = unitId;
             var responseDTO = await _problemService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetProblem), new { id = responseDTO.Id }, responseDTO);
+            return CreatedAtAction(nameof(GetByUnit), new {id = responseDTO.Id, unitId = responseDTO.UnitId}, responseDTO);
         }
 
+        // UPDATE PROBLEM BY UNIT AND ID
         [HttpPut("{id:int}")]
         public async Task<ActionResult<ProblemResponseDTO>> Put (int unitId, int id, ProblemUpdateDTO dto)
         {

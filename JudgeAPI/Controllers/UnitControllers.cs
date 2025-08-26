@@ -2,6 +2,7 @@
 using JudgeAPI.Entities;
 using JudgeAPI.Models;
 using JudgeAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace JudgeAPI.Controllers
 {
     [ApiController]
     [Route("api/units")]
+    [Authorize]
     public class UnitControllers : ControllerBase
     {
         private readonly IUnitService _unitService;
