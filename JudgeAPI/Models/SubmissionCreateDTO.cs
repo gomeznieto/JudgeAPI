@@ -2,10 +2,8 @@
 
 namespace JudgeAPI.Models
 {
-    public class SubmissionCreate
+    public class SubmissionCreateDTO
     {
-        [Required]
-        public int ProblemId { get; set; }
         [Required]
         [MaxLength(10000, ErrorMessage = "El código es demasiado largo.")]
         public required string Code { get; set; }

@@ -17,6 +17,13 @@ namespace JudgeAPI.Mapping
             CreateMap<ProblemUpdateDTO, Problem>();
             CreateMap<UserCreateDTO, ApplicationUser>();
             CreateMap<ApplicationUser, UserResponseDTO>();
+            CreateMap<SubmissionCreateDTO, Submission>();
+            CreateMap<Submission, SubmissionResponseDTO>();
+            CreateMap<Submission, SubmissionResponseWithResultDTO>();
+
+            CreateMap<SubmissionResult, SubmissionResultResponseDTO>()
+                .ForMember(dest => dest.Input, opt => opt.MapFrom(src => src.TestCase!.InputData))
+                .ForMember(dest => dest.ExpectedOutput, opt => opt.MapFrom(src => src.TestCase!.ExpectedOutput));
         }
     }
 }
