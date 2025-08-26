@@ -1,9 +1,11 @@
 ﻿using JudgeAPI.Models;
+using JudgeAPI.Models.Auth;
 
 namespace JudgeAPI.Services
 {
     public interface IAuthService
     {
-        Task<UserResponseDTO> RegisterAsync(UserCreateDTO dto);
+        Task<TokenResponse> LoginAsync(LoginRequest request);
+        Task<TokenResponse> RegisterAsync(UserCreateDTO dto);
     }
 }

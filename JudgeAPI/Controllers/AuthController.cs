@@ -1,6 +1,8 @@
 ﻿using JudgeAPI.Models;
+using JudgeAPI.Models.Auth;
 using JudgeAPI.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace JudgeAPI.Controllers
 {
@@ -17,9 +19,6 @@ namespace JudgeAPI.Controllers
             _authService = authService;
         }
 
-        /// <summary>
-        /// Registers a new user.
-        /// </summary>
         [HttpPost("register")]
         public async Task<ActionResult<UserResponseDTO>> Register(UserCreateDTO dto)
         {
@@ -27,19 +26,13 @@ namespace JudgeAPI.Controllers
             return Ok(responseDTO);
         }
 
-        /// <summary>
-        /// Logs in a user.
-        /// </summary>
         [HttpPost("login")]
-        public IActionResult Login()
+        public async Task<ActionResult<TokenResponse>> Login([FromBody] LoginRequest request)
         {
-            // TODO: Implement login logic
-            return Ok();
+            var tokenResponse = await _authService.LoginAsync(request);   
+            return Ok(tokenResponse);
         }
 
-        /// <summary>
-        /// Logs out a user.
-        /// </summary>
         [HttpPost("logout")]
         public IActionResult Logout()
         {
@@ -47,9 +40,6 @@ namespace JudgeAPI.Controllers
             return Ok();
         }
 
-        /// <summary>
-        /// Refreshes an authentication token.
-        /// </summary>
         [HttpPost("refresh-token")]
         public IActionResult RefreshToken()
         {
@@ -57,9 +47,6 @@ namespace JudgeAPI.Controllers
             return Ok();
         }
 
-        /// <summary>
-        /// Confirms a user's email address.
-        /// </summary>
         [HttpPost("confirm-email")]
         public IActionResult ConfirmEmail()
         {
@@ -67,9 +54,6 @@ namespace JudgeAPI.Controllers
             return Ok();
         }
 
-        /// <summary>
-        /// Initiates the password reset process.
-        /// </summary>
         [HttpPost("forgot-password")]
         public IActionResult ForgotPassword()
         {
@@ -77,9 +61,6 @@ namespace JudgeAPI.Controllers
             return Ok();
         }
 
-        /// <summary>
-        /// Resets a user's password.
-        /// </summary>
         [HttpPost("reset-password")]
         public IActionResult ResetPassword()
         {
