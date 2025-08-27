@@ -1,6 +1,6 @@
 ﻿namespace JudgeAPI.Excerptions
 {
-    public class ConflictException : Exception
+    public class ConflictException : AppException
     {
         public ConflictException(string message) : base(message)
         {

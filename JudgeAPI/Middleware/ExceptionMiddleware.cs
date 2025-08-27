@@ -25,10 +25,22 @@ namespace JudgeAPI.Middleware
                 context.Response.StatusCode = StatusCodes.Status404NotFound;
                 await context.Response.WriteAsJsonAsync(new { error = ex.Message });
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogWarning(ex, "Recurso no encontrado");
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            }
             catch (ConflictException ex)
             {
                 _logger.LogWarning(ex, "Conflicto detectado");
                 context.Response.StatusCode = StatusCodes.Status409Conflict;
+                await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            }
+            catch (ValidationException ex)
+            {
+                _logger.LogWarning(ex, "Error de validación");
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await context.Response.WriteAsJsonAsync(new { error = ex.Message });
             }
             catch (UnauthorizedAccessException ex)

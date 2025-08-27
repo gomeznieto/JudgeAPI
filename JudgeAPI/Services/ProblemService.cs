@@ -21,7 +21,6 @@ namespace JudgeAPI.Services
             _mapper = mapper;
         }
 
-        // GET Unit With Problems
         public async Task<UnitWithProblemsDTO> GetUnitWithProblemsAsync(int unitId)
         {
             var unit = await _appDbContext.Units
@@ -34,7 +33,6 @@ namespace JudgeAPI.Services
             return _mapper.Map<UnitWithProblemsDTO>(unit);
         }
 
-        // POST problem
         public async Task<ProblemResponseDTO> CreateAsync(ProblemCreateDTO dto)
         {
             var problem = _mapper.Map<Problem>(dto);
@@ -45,7 +43,6 @@ namespace JudgeAPI.Services
             return mapping;
         }
 
-        // GET by id
         public async Task<ProblemResponseDTO> GetById(int id)
         {
             var problem = await _appDbContext.Problems.FindAsync(id);
@@ -56,7 +53,6 @@ namespace JudgeAPI.Services
             return _mapper.Map<ProblemResponseDTO>(problem);
         }
 
-        //Update
         public async Task<ProblemResponseDTO> UpdateAsync(ProblemUpdateDTO dto)
         {
             var problem = await _appDbContext.Problems.FindAsync(dto.Id);
@@ -70,6 +66,19 @@ namespace JudgeAPI.Services
 
             return _mapper.Map<ProblemResponseDTO>(problem);
 
+        }
+
+        public async Task DeleteProblemAsync(int id)
+        {
+            var exist = await _appDbContext.Problems.AnyAsync(x => x.Id == id);
+
+            if(!exist)
+                throw new KeyNotFoundException($"No se encontró el problema con ID {id}");
+
+            var affectedRows = await _appDbContext.Problems.Where(x => x.Id == id).ExecuteDeleteAsync();
+
+            if(affectedRows == 0)
+                throw new InvalidOperationException($"No se pudo eliminar el problema con ID {id}.");
         }
     }
 }

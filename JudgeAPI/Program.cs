@@ -36,6 +36,7 @@ builder.Services.AddTransient<IUnitService, UnitService>();
 builder.Services.AddTransient<IProblemService, ProblemService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<ISubmissionService, SubmissionService>();
+builder.Services.AddTransient<ITestCaseService, TestCaseService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();

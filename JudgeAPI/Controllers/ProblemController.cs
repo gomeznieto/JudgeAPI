@@ -35,7 +35,7 @@ namespace JudgeAPI.Controllers
             return Ok(problem);
         }
 
-        // --- POST PROBLEM BY UNIT
+        // --- POST ---
         [HttpPost]
         public async Task<ActionResult<ProblemResponseDTO>> Post(int unitId, [FromBody]ProblemCreateDTO dto)
         {
@@ -44,7 +44,7 @@ namespace JudgeAPI.Controllers
             return CreatedAtAction(nameof(GetByUnit), new {id = responseDTO.Id, unitId = responseDTO.UnitId}, responseDTO);
         }
 
-        // UPDATE PROBLEM BY UNIT AND ID
+        // --- UPDATE ---
         [HttpPut("{id:int}")]
         public async Task<ActionResult<ProblemResponseDTO>> Put (int unitId, int id, ProblemUpdateDTO dto)
         {
@@ -62,5 +62,16 @@ namespace JudgeAPI.Controllers
             return Ok(problem);
         }
 
+        // --- DELETE ---
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete (int id, bool confirm = false)
+        {
+            if (!confirm)
+                return BadRequest("Debe confirmar la eliminación con ?confirm=true");
+
+            await _problemService.DeleteProblemAsync(id);
+
+            return NoContent();
+        }
     }
 }
