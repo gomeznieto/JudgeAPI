@@ -1,5 +1,5 @@
-﻿using JudgeAPI.Models;
-using JudgeAPI.Services;
+﻿using JudgeAPI.Models.Submission;
+using JudgeAPI.Services.Submissions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -33,6 +33,8 @@ namespace JudgeAPI.Controllers
                 return Unauthorized();
 
             var submissionResponse = await _submissionService.CreateSubmissionAsync(userId, problemId, create);
+
+            await _submissionService.AnalyzeSubmissionAsync(submissionResponse.Id);
 
             return CreatedAtAction(nameof(GetSubmission), new { submissionId = submissionResponse.Id, problemId = problemId }, submissionResponse);
         }

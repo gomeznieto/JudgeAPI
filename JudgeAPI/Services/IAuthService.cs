@@ -1,5 +1,5 @@
-﻿using JudgeAPI.Models;
-using JudgeAPI.Models.Auth;
+﻿using JudgeAPI.Models.Auth;
+using JudgeAPI.Models.User;
 
 namespace JudgeAPI.Services
 {

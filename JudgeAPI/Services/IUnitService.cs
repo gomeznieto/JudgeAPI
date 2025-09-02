@@ -1,4 +1,4 @@
-﻿using JudgeAPI.Models;
+﻿using JudgeAPI.Models.Unit;
 
 namespace JudgeAPI.Services
 {

@@ -17,6 +17,6 @@ namespace JudgeAPI.Entities
         [Required]
         public string? Output { get; set; }
         public bool IsCorrect { get; set; }
-        public int? ExecutionTimeMs { get; set; }
+        public long? ExecutionTimeMs { get; set; }
     }
 }

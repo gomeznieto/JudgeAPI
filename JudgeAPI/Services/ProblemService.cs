@@ -1,7 +1,8 @@
 ﻿using AutoMapper;
 using JudgeAPI.Data;
 using JudgeAPI.Entities;
-using JudgeAPI.Models;
+using JudgeAPI.Models.Problem;
+using JudgeAPI.Models.Unit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 

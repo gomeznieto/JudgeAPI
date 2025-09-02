@@ -1,4 +1,6 @@
-﻿namespace JudgeAPI.Models
+﻿using JudgeAPI.Models.Problem;
+
+namespace JudgeAPI.Models.Unit
 {
     public class UnitWithProblemsDTO
     {

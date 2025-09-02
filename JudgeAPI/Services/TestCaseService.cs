@@ -2,7 +2,7 @@
 using JudgeAPI.Data;
 using JudgeAPI.Entities;
 using JudgeAPI.Excerptions;
-using JudgeAPI.Models;
+using JudgeAPI.Models.TestCase;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 

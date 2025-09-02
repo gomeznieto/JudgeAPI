@@ -1,4 +1,4 @@
-﻿using JudgeAPI.Models;
+﻿using JudgeAPI.Models.TestCase;
 using JudgeAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

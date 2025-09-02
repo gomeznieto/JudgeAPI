@@ -3,6 +3,8 @@ using JudgeAPI.Entities;
 using JudgeAPI.Extensions;
 using JudgeAPI.Middleware;
 using JudgeAPI.Services;
+using JudgeAPI.Services.Execution;
+using JudgeAPI.Services.Submissions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -37,6 +39,9 @@ builder.Services.AddTransient<IProblemService, ProblemService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<ISubmissionService, SubmissionService>();
 builder.Services.AddTransient<ITestCaseService, TestCaseService>();
+builder.Services.AddTransient<ICodeCompilerService, GppCodeCompilerService>();
+builder.Services.AddTransient<ICodeExecutorService, BasicExecutorService>();
+builder.Services.AddTransient<ISubmissionAnalyzerService, SubmissionAnalyzerService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();

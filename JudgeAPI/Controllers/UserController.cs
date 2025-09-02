@@ -1,4 +1,4 @@
-﻿using JudgeAPI.Models;
+﻿using JudgeAPI.Models.User;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JudgeAPI.Controllers

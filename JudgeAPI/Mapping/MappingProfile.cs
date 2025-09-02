@@ -1,6 +1,10 @@
 ﻿using AutoMapper;
 using JudgeAPI.Entities;
-using JudgeAPI.Models;
+using JudgeAPI.Models.Problem;
+using JudgeAPI.Models.Submission;
+using JudgeAPI.Models.TestCase;
+using JudgeAPI.Models.Unit;
+using JudgeAPI.Models.User;
 
 namespace JudgeAPI.Mapping
 {

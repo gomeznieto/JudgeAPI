@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace JudgeAPI.Models
+namespace JudgeAPI.Models.User
 {
     public class UserUpdateDTO
     {

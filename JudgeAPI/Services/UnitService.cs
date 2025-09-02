@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using JudgeAPI.Data;
 using JudgeAPI.Entities;
-using JudgeAPI.Models;
+using JudgeAPI.Models.Unit;
 using Microsoft.EntityFrameworkCore;
 
 namespace JudgeAPI.Services

@@ -1,4 +1,4 @@
-﻿using JudgeAPI.Models;
+﻿using JudgeAPI.Models.TestCase;
 
 namespace JudgeAPI.Services
 {

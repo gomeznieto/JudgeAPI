@@ -1,4 +1,4 @@
-﻿namespace JudgeAPI.Models
+﻿namespace JudgeAPI.Models.Unit
 {
     public class UnitResponseDTO
     {

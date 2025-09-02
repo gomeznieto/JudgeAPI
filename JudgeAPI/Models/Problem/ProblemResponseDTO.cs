@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace JudgeAPI.Models
+namespace JudgeAPI.Models.Problem
 {
     public class ProblemResponseDTO
     {
