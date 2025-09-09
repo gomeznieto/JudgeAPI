@@ -4,7 +4,7 @@ using JudgeAPI.Entities;
 using JudgeAPI.Models.Unit;
 using Microsoft.EntityFrameworkCore;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.Unit
 {
     public class UnitService : IUnitService
     {
@@ -43,7 +43,7 @@ namespace JudgeAPI.Services
         // CREATE
         public async Task<UnitResponseDTO> CreateAsync(UnitCreateDTO dto)
         {
-            var unit = _mapper.Map<Unit>(dto);
+            var unit = _mapper.Map<Entities.Unit>(dto);
             _appDbContext.Add(unit);
             await _appDbContext.SaveChangesAsync();
 

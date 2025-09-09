@@ -1,6 +1,6 @@
 ﻿using JudgeAPI.Entities;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.Token
 {
     public interface ITokenService
     {

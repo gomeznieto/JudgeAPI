@@ -7,13 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JudgeAPI.Services.Submissions
 {
-    public class SubmissionAnalyzerService : ISubmissionAnalyzerService
+    public class LocalAnalyzer : IAnalyzer
     {
         private readonly ICodeCompilerService _codeCompilerService;
         private readonly ICodeExecutorService _codeExecutorService;
         private readonly AppDbContext _appDbContext;
 
-        public SubmissionAnalyzerService(
+        public LocalAnalyzer(
             ICodeCompilerService codeCompilerService,
             ICodeExecutorService codeExecutorService,
             AppDbContext appDbContext

@@ -6,7 +6,7 @@ using JudgeAPI.Models.Unit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.Problem
 {
     public class ProblemService : IProblemService
     {
@@ -36,7 +36,7 @@ namespace JudgeAPI.Services
 
         public async Task<ProblemResponseDTO> CreateAsync(ProblemCreateDTO dto)
         {
-            var problem = _mapper.Map<Problem>(dto);
+            var problem = _mapper.Map<Entities.Problem>(dto);
 
             _appDbContext.Add(problem);
             await _appDbContext.SaveChangesAsync();

@@ -1,7 +1,7 @@
 ﻿
 namespace JudgeAPI.Services.Submissions
 {
-    public interface ISubmissionAnalyzerService
+    public interface IAnalyzer
     {
         Task<bool> AnalyzeAsync(int submissionId);
     }

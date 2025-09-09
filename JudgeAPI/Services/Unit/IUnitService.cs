@@ -1,6 +1,6 @@
 ﻿using JudgeAPI.Models.Unit;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.Unit
 {
     public interface IUnitService
     {

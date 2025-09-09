@@ -13,13 +13,13 @@ namespace JudgeAPI.Services.Submissions
     {
         private readonly AppDbContext _appDbContext;
         private readonly IMapper _mapper;
-        private readonly ISubmissionAnalyzerService _submissionAnalyzerService;
+        private readonly IAnalyzer _submissionAnalyzerService;
         private readonly IConfiguration _configuration;
 
         public SubmissionService(
             AppDbContext appDbContext,
             IMapper mapper,
-            ISubmissionAnalyzerService submissionAnalyzerService,
+            IAnalyzer submissionAnalyzerService,
             IConfiguration configuration
         )
         {

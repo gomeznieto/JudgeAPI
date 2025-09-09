@@ -1,7 +1,7 @@
 ﻿using JudgeAPI.Models.Auth;
 using JudgeAPI.Models.User;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.Ath
 {
     public interface IAuthService
     {

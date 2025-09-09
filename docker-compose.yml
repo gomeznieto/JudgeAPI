@@ -1,26 +1,39 @@
-version: '3.8'
-
 services:
   api:
     build:
       context: ./JudgeAPI
-    ports:
-      - "5000:80"
-    depends_on:
-      - db
+    ports: ["5000:80"]
+    depends_on: [db]
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=db;Database=JudgeDb;User=sa;Password=Your_password123;TrustServerCertificate=true;
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
-    ports:
-      - "1433:1433"
+    ports: ["14330:1433"]
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
     volumes:
       - sqlvolume:/var/opt/mssql
+
+  redis:
+    image: redis:7-alpine
+    ports: ["63790:6379"]
+
+  runner:
+    user: root
+    build:
+      context: .
+      dockerfile: RunnerApp/Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on: [redis]
+
+  cpp-runner-image:
+    build:
+      context: ./JudgeAPI/CppRunnerImage
+    image: judge-cpp-runner
 
 volumes:
   sqlvolume:

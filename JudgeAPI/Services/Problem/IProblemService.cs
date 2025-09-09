@@ -1,7 +1,7 @@
 ﻿using JudgeAPI.Models.Problem;
 using JudgeAPI.Models.Unit;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.Problem
 {
     public interface IProblemService
     {

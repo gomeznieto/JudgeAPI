@@ -4,11 +4,12 @@ using JudgeAPI.Entities;
 using JudgeAPI.Excerptions;
 using JudgeAPI.Models.Auth;
 using JudgeAPI.Models.User;
+using JudgeAPI.Services.Token;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.Ath
 {
     public class AuthService : IAuthService
     {

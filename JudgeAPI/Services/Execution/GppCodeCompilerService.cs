@@ -63,6 +63,7 @@ namespace JudgeAPI.Services.Execution
                     if (!string.IsNullOrWhiteSpace(error))
                     {
                         _logger.LogError("Error de compilación: {error}", error);
+                        File.Delete(filePath);
                         return CompilationResult.Failed();
                     }
 
@@ -70,6 +71,7 @@ namespace JudgeAPI.Services.Execution
                 catch (Exception ex)
                 {
                     _logger.LogError($"Error de compilación: {ex.Message}");
+                    File.Delete(filePath);
                     throw;
                 }
             }

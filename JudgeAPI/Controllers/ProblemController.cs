@@ -1,6 +1,6 @@
 ﻿using JudgeAPI.Models.Problem;
 using JudgeAPI.Models.Unit;
-using JudgeAPI.Services;
+using JudgeAPI.Services.Problem;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

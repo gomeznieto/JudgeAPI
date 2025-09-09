@@ -6,6 +6,6 @@ namespace JudgeAPI.Services.Execution
 {
     public interface ICodeExecutorService
     {
-        Task<ExecutionResult> ExecuteAsync(int submissionId, TestCase test, CompilationResult result);
+        Task<ExecutionResult> ExecuteAsync(int submissionId, Entities.TestCase test, CompilationResult result);
     }
 }

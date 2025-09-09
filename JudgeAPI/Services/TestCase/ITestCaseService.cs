@@ -1,6 +1,6 @@
 ﻿using JudgeAPI.Models.TestCase;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.TestCase
 {
     public interface ITestCaseService
     {

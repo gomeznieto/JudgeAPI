@@ -1,6 +1,6 @@
 ﻿using JudgeAPI.Models.Auth;
 using JudgeAPI.Models.User;
-using JudgeAPI.Services;
+using JudgeAPI.Services.Ath;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 

@@ -6,7 +6,7 @@ using JudgeAPI.Models.TestCase;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.TestCase
 {
     public class TestCaseService : ITestCaseService
     {
@@ -33,7 +33,7 @@ namespace JudgeAPI.Services
             if (string.IsNullOrEmpty(create.ExpectedOutput) || string.IsNullOrEmpty(create.InputData))
                 throw new ValidationException("Los campos de entrada y salida esperada no pueden estar vacíos.");
 
-            var test = _mapper.Map<TestCase>(create);
+            var test = _mapper.Map<Entities.TestCase>(create);
             test.ProblemId = problemId;
 
             _appDbContext.Add(test);

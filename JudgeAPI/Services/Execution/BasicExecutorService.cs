@@ -21,7 +21,7 @@ namespace JudgeAPI.Services.Execution
             _logger = logger;
         }
 
-        public async Task<ExecutionResult> ExecuteAsync(int submissionId, TestCase test, CompilationResult result)
+        public async Task<ExecutionResult> ExecuteAsync(int submissionId, Entities.TestCase test, CompilationResult result)
         {
 
             using (Process exeProcess = new Process())

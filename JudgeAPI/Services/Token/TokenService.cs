@@ -7,7 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace JudgeAPI.Services
+namespace JudgeAPI.Services.Token
 {
     public class TokenService : ITokenService
     {
