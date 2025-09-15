@@ -7,6 +7,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=db;Database=JudgeDb;User=sa;Password=Your_password123;TrustServerCertificate=true;
+      - ADMIN_MAIL=admin@mail.com
+      - ADMIN_PASSWORD=SuperFuerteYSecreto123!
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest

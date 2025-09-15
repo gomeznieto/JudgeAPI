@@ -2,6 +2,7 @@ using JudgeAPI.Configuration;
 using JudgeAPI.Data;
 using JudgeAPI.Entities;
 using JudgeAPI.Extensions;
+using JudgeAPI.Infrastructure.Seed;
 using JudgeAPI.Middleware;
 using JudgeAPI.Services.Ath;
 using JudgeAPI.Services.Execution;
@@ -53,7 +54,7 @@ if (mode.Equals("local", StringComparison.OrdinalIgnoreCase))
 else
     builder.Services.AddScoped<IAnalyzer, DistributedAnalyzer>();
 
-// RUNNER
+// SERVICIO QUE EJECUTA EL CPP EN LOCAL
 builder.Services.AddSingleton(new RunnerConfig()
 {
     Cpus = 1,
@@ -79,6 +80,18 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+}
+
+// INICIAMOS CARGA A LA DB
+using (var scope = app.Services.CreateScope())
+{
+    // ROLES
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await RoleSeeder.SeedRoleAsync(roleManager);
+
+    // ADMIN
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    await UserSeeder.SeedAdminAsync(userManager);
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
