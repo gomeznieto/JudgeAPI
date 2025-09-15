@@ -1,14 +1,22 @@
-# Imagen base con .NET SDK para desarrollo (incluye dotnet watch)
-FROM mcr.microsoft.com/dotnet/sdk:8.0
+# ---- build stage ----
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
 
-# Directorio de trabajo dentro del contenedor
+# Copiar el csproj y restaurar
+COPY JudgeAPI.csproj ./
+RUN dotnet restore
+
+# Copiar el resto del código
+COPY . .
+RUN dotnet publish -c Release -o /app/publish
+
+# ---- runtime stage ----
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# Instalar g++ antes de copiar código
-RUN apt-get update && apt-get install -y g++
+# Instalar g++ para compilación local
+RUN apt-get update && apt-get install -y g++ && rm -rf /var/lib/apt/lists/*
 
-# Copiamos todo el contenido del proyecto (csproj + src)
-COPY . .
+COPY --from=build /app/publish .
 
-# Restauramos los paquetes
-RUN dotnet restore
+ENTRYPOINT ["dotnet", "JudgeAPI.dll"]

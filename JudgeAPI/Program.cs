@@ -23,7 +23,8 @@ builder.Services.AddControllers();
 
 // DB CONTEXT
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)));
 
 // DB IDENTITY
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
@@ -72,6 +73,13 @@ builder.Services.AddTransient<ICodeExecutorService, BasicExecutorService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();
+
+// MIGRATE AL INICIAR SERVICIO
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();

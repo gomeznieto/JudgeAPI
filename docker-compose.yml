@@ -19,7 +19,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports: ["63790:6379"]
+    ports: ["6378:6379"]
 
   runner:
     user: root
@@ -27,6 +27,7 @@ services:
       context: .
       dockerfile: RunnerApp/Dockerfile
     volumes:
+      - ./jobs:/app/jobs
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on: [redis]
 
@@ -34,6 +35,8 @@ services:
     build:
       context: ./JudgeAPI/CppRunnerImage
     image: judge-cpp-runner
+    volumes:
+      - ./jobs:/app/jobs
 
 volumes:
   sqlvolume:

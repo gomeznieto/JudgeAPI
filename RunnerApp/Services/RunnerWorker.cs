@@ -87,16 +87,50 @@ namespace JudgeAPI.Services.Execution
 
             // Creamos la carpeta y agregar el archivo cpp
             var guid = Guid.NewGuid().ToString("N");
-            var guid2 = Guid.NewGuid().ToString();
-            var tempDir = Path.Combine(Path.GetTempPath(), $"job_{submission.Id}_{guid}");
+            var tempDirBase = Path.Combine(Directory.GetCurrentDirectory(), "jobs");
+
+            Directory.CreateDirectory(tempDirBase);
+
+            var jobsRoot = "/app/jobs";
+
+            // TEST
+            Console.WriteLine($"[Runner] jobsRoot = {jobsRoot}");
+
+
+            var tempDir = Path.Combine(jobsRoot, $"job_{submission.Id}_{guid}");
+
             Directory.CreateDirectory(tempDir);
+
+            // Permisos para escribir
+            var dirInfo = new DirectoryInfo(tempDir);
+            dirInfo.Attributes &= ~FileAttributes.ReadOnly;
+
+            var chmodResult = Process.Start(new ProcessStartInfo
+            {
+                FileName = "chmod",
+                Arguments = "-R 777 " + tempDir,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            chmodResult?.WaitForExit();
+
             var src = Path.Combine(tempDir, "main.cpp");
-            await File.WriteAllTextAsync(src, submission.Code ?? string.Empty, stoppingToken);
+            File.WriteAllText(src, submission.Code);
 
             // Compilar
             var std = _configuration["CompilerSettings:CppStandard"] ?? "c++17";
             var flags = _configuration["CompilerSettings:Flags"] ?? "-Wall";
-            var compileCmd = $"-std={std} {flags} /work/main.cpp -o /work/a.out";
+            var compileCmd = $"ls -R /app/jobs && g++ -std=c++17 -Wall /app/jobs/job_{submission.Id}_{guid}/main.cpp -o /app/jobs/job_{submission.Id}_{guid}/a.out";
+
+
+            Console.WriteLine($"[Runner] wrote source? {File.Exists(src)} size={new FileInfo(src).Length}");
+            Console.WriteLine($"[Runner] dir exists: {Directory.Exists(tempDir)}");
+            foreach (var file in Directory.GetFiles(tempDir))
+            {
+                Console.WriteLine($"[Runner] - {file}");
+            }
 
             var compileRes = await RunDockerAsync(tempDir, compileCmd, captureStdErr: true, stoppingToken);
 
@@ -119,14 +153,14 @@ namespace JudgeAPI.Services.Execution
                 await File.WriteAllTextAsync(inPath, tc.InputData ?? string.Empty, stoppingToken);
                 if (File.Exists(outPath)) File.Delete(outPath);
 
-                var runCmd = $"timeout {_cfg.PerTestTimeoutSeconds}s /work/a.out < /work/input.txt > /work/output.txt";
+                var runCmd = $"timeout {_cfg.PerTestTimeoutSeconds}s {tempDir}/a.out < {tempDir}/input.txt > {tempDir}/output.txt";
                 var sw = Stopwatch.StartNew();
                 var runRes = await RunDockerAsync(tempDir, runCmd, captureStdErr: true, stoppingToken);
                 sw.Stop();
 
                 var output = File.Exists(outPath) ? await File.ReadAllTextAsync(outPath, stoppingToken) : string.Empty;
 
-                bool isTle = runRes.ExitCode == 124; // 'timeout' devuelve 124
+                bool isTle = runRes.ExitCode == 124;
                 bool isRe = runRes.ExitCode != 0 && !isTle;
 
                 bool isCorrect = false;
@@ -175,77 +209,60 @@ namespace JudgeAPI.Services.Execution
 
         private async Task<ProcessResult> RunDockerAsync(string hostWorkDir, string innerCmd, bool captureStdErr, CancellationToken stoppingToken)
         {
-
-            var args = new[]
+            var psi = new ProcessStartInfo
             {
-                "run","--rm",
-                "--network","none",
-                $"--cpus={_cfg.Cpus}",
-                $"--memory={_cfg.MemoryMb}m",
-                "--pids-limit","256",
-                "--read-only",
-                "-v",$"{hostWorkDir}:/work",
-                "--user","1000:1000",
-                _cfg.ImageName,
-                "/bin/sh","-lc", innerCmd
-            };
-
-            var workDir = Directory.Exists("/app") ? "/app" : "/";
-
-            var psi = new ProcessStartInfo("docker", string.Join(' ', args))
-            {
+                FileName = "docker",
                 RedirectStandardOutput = true,
                 RedirectStandardError = captureStdErr,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                WorkingDirectory = workDir
+                WorkingDirectory = Directory.Exists("/app") ? "/app" : "/"
             };
 
+            var hostJobsDir = Environment.GetEnvironmentVariable("HOST_JOBS_DIR") ?? "./jobs";
 
-            Console.WriteLine("[Runner] WorkingDirectory: " + psi.WorkingDirectory);
-            Console.WriteLine("[Runner] docker path: " + Environment.GetEnvironmentVariable("PATH"));
-            Console.WriteLine("[Runner] file exists? " + File.Exists("/usr/bin/docker"));
-            Console.WriteLine("[Runner] can run docker directly?");
+            psi.ArgumentList.Add("run");
+            psi.ArgumentList.Add("--rm");
+            psi.ArgumentList.Add("--network"); 
+            psi.ArgumentList.Add("none");
+            psi.ArgumentList.Add($"--cpus={_cfg.Cpus}");
+            psi.ArgumentList.Add($"--memory={_cfg.MemoryMb}m");
+            psi.ArgumentList.Add("--pids-limit"); 
+            psi.ArgumentList.Add("256");
+            psi.ArgumentList.Add("--read-only");
+            psi.ArgumentList.Add("--tmpfs"); psi.ArgumentList.Add("/tmp");
+            psi.ArgumentList.Add("-v");
+            psi.ArgumentList.Add($"{hostJobsDir}:/app/jobs");
+            psi.ArgumentList.Add("--user"); 
+            psi.ArgumentList.Add("1000:1000");
+            psi.ArgumentList.Add(_cfg.ImageName);
+            psi.ArgumentList.Add("/bin/sh");
+            psi.ArgumentList.Add("-lc");
+            psi.ArgumentList.Add(innerCmd);
 
-            Process? p;
+            Console.WriteLine("[Runner] cmd: docker " + string.Join(' ', psi.ArgumentList.Select(a => a.Contains(' ') ? $"\"{a}\"" : a)));
 
-            try
-            {
-                p = Process.Start(psi);
-                if (p is null)
-                {
-                    Console.WriteLine("[Runner] ❌ No se pudo iniciar el proceso Docker.");
-                    return new ProcessResult { ExitCode = -1 };
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Runner] ❌ Excepción lanzada al iniciar Docker: {ex}");
-                return new ProcessResult { ExitCode = -1 };
-            }
+            using var p = Process.Start(psi);
+            if (p is null) return new ProcessResult { ExitCode = -1 };
 
-            if (p == null)
-{
-                Console.WriteLine("[Runner] ❌ No se pudo iniciar el proceso Docker.");
-            }
-
-            var stdOutTask = p.StandardOutput.ReadToEndAsync();
-            var stdErrTask = captureStdErr ? p.StandardError.ReadToEndAsync() : Task.FromResult(string.Empty);
+            var outTask = p.StandardOutput.ReadToEndAsync();
+            var errTask = captureStdErr ? p.StandardError.ReadToEndAsync() : Task.FromResult(string.Empty);
 
             await p.WaitForExitAsync(stoppingToken);
-            var outText = await stdOutTask;
-            var errText = await stdErrTask;
+            var outText = await outTask;
+            var errText = await errTask;
 
             Console.WriteLine($"[docker output]\n{outText}");
             Console.WriteLine($"[docker error]\n{errText}");
 
-            return new ProcessResult()
+            return new ProcessResult
             {
                 ExitCode = p.ExitCode,
-                StdErr = outText,
-                StdOut = errText
+                StdOut = outText,
+                StdErr = errText
             };
         }
+
 
     }
 }

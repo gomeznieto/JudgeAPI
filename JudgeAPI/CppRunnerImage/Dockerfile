@@ -15,7 +15,7 @@ RUN useradd -ms /bin/bash runner
 USER runner
 
 # Carpeta de trabajo
-WORKDIR /work
-
+WORKDIR /app/jobs
+USER 1000:1000
 # EntryPoint vacío (el contenedor va a recibir comandos como `g++ main.cpp`)
 CMD ["/bin/bash"]
