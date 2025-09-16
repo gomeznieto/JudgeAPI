@@ -6,6 +6,6 @@
         public const string Correct = "Correct";
         public const string Wrong = "Wrong";
         public const string CompilationError = "CompilationError";
-        public const string Queued = "En Fila";
+        public const string Queued = "Queued";
     }
 }

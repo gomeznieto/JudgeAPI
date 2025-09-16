@@ -1,11 +1,11 @@
-﻿namespace JudgeAPI.Models.User
+﻿using JudgeAPI.Models.Submission;
+
+namespace JudgeAPI.Models.User
 {
     public class UserResponseDTO
     {
         public required string UserName { get; set; }
-        public string? Email { get; set; }
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
-        public string? University { get; set; }
+
+        public List<SubmissionResponseDTO> Submissons { get; set; } = new List<SubmissionResponseDTO>();
     }
 }

@@ -11,6 +11,7 @@ using JudgeAPI.Services.Submissions;
 using JudgeAPI.Services.TestCase;
 using JudgeAPI.Services.Token;
 using JudgeAPI.Services.Unit;
+using JudgeAPI.Services.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -64,6 +65,8 @@ builder.Services.AddSingleton(new RunnerConfig()
 });
 
 // SERVICES
+builder.Services.AddTransient<ICurrentUserService, CurrentUserService>();
+builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IUnitService, UnitService>();
 builder.Services.AddTransient<IProblemService, ProblemService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
