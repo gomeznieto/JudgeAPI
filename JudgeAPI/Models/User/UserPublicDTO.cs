@@ -2,8 +2,9 @@
 
 namespace JudgeAPI.Models.User
 {
-    public class UserPublicDTO : UserResponseDTO
+    public class UserPublicDTO : UserBaseDTO
     {
-        // Agregar atributos propios de un usuario público
+        public required string UserName { get; set; }
+        public List<SubmissionResponseDTO> Submissons { get; set; } = new List<SubmissionResponseDTO>();
     }
 }

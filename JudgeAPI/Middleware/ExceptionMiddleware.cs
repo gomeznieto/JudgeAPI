@@ -37,6 +37,12 @@ namespace JudgeAPI.Middleware
                 context.Response.StatusCode = StatusCodes.Status409Conflict;
                 await context.Response.WriteAsJsonAsync(new { error = ex.Message });
             }
+            catch (ForbiddenException ex)
+            {
+                _logger.LogWarning(ex, "No tiene permido el acceso");
+                context.Response.StatusCode = StatusCodes.Status409Conflict;
+                await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            }
             catch (ValidationException ex)
             {
                 _logger.LogWarning(ex, "Error de validación");

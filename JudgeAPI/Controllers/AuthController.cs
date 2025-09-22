@@ -20,7 +20,7 @@ namespace JudgeAPI.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<UserResponseDTO>> Register(UserCreateDTO dto)
+        public async Task<ActionResult<UserBaseDTO>> Register(UserCreateDTO dto)
         {
             var responseDTO = await _authService.RegisterAsync(dto);
             return Ok(responseDTO);

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using JudgeAPI.Constants;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JudgeAPI.Entities
@@ -12,9 +13,9 @@ namespace JudgeAPI.Entities
         [ForeignKey(nameof(ProblemId))]
         public Problem? Problem { get; set; }
         public string? Code { get; set; }
-        public string Language { get; set; } = "C++";
+        public string Language { get; set; } = Languages.Cpp;
         public DateTime SubmissionTime { get; set; } = DateTime.UtcNow;
-        public string Verdict { get; set; } = "Pending";
+        public string Verdict { get; set; } = SubmissionVerdicts.Pending;
         public ICollection<SubmissionResult>? Results{ get; set; }
     }
 }

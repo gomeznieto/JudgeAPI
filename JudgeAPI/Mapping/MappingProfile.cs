@@ -5,6 +5,7 @@ using JudgeAPI.Models.Submission;
 using JudgeAPI.Models.TestCase;
 using JudgeAPI.Models.Unit;
 using JudgeAPI.Models.User;
+using StackExchange.Redis;
 
 namespace JudgeAPI.Mapping
 {
@@ -12,15 +13,33 @@ namespace JudgeAPI.Mapping
     {
         public MappingProfile()
         {
+
+            // Unit
             CreateMap<Unit, UnitResponseDTO>();
             CreateMap<UnitCreateDTO, Unit>();
             CreateMap<UnitUpdateDTO, Unit>();
             CreateMap<Unit, UnitWithProblemsDTO>();
+
+            // Problems
             CreateMap<Problem, ProblemResponseDTO>();
             CreateMap<ProblemCreateDTO, Problem>();
             CreateMap<ProblemUpdateDTO, Problem>();
+
+            // USers
             CreateMap<UserCreateDTO, ApplicationUser>();
-            CreateMap<ApplicationUser, UserResponseDTO>();
+
+            CreateMap<UserUpdateDTO, ApplicationUser>()
+                .ForMember(dest => dest.Email, opt => opt.Condition(src => src.Email != null))
+                .ForMember(dest => dest.FirstName, opt => opt.Condition(src => src.FirstName != null))
+                .ForMember(dest => dest.LastName, opt => opt.Condition(src => src.LastName != null))
+                .ForMember(dest => dest.University, opt => opt.Condition(src => src.University != null))
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
+
+            CreateMap<ApplicationUser, UserPrivateDTO>();
+            CreateMap<ApplicationUser, UserPublicDTO>();
+            CreateMap<ApplicationUser, UserAdminDTO>();
+
+            // Submissions
             CreateMap<SubmissionCreateDTO, Submission>();
             CreateMap<Submission, SubmissionResponseDTO>();
             CreateMap<Submission, SubmissionResponseWithResultDTO>();
@@ -29,6 +48,7 @@ namespace JudgeAPI.Mapping
                 .ForMember(dest => dest.Input, opt => opt.MapFrom(src => src.TestCase!.InputData))
                 .ForMember(dest => dest.ExpectedOutput, opt => opt.MapFrom(src => src.TestCase!.ExpectedOutput));
 
+            // Test Case
             CreateMap<TestCaseCreateDTO, TestCase>();
             CreateMap<TestCase,  TestCaseResponseDTO>();
 

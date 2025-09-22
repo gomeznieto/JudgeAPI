@@ -22,6 +22,8 @@ services:
   redis:
     image: redis:7-alpine
     ports: ["6378:6379"]
+    volumes:
+    - redisdata:/data
 
   runner:
     user: root
@@ -42,3 +44,4 @@ services:
 
 volumes:
   sqlvolume:
+  redisdata:
