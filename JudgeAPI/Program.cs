@@ -18,10 +18,18 @@ using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Text;
 
+
+// -- BUILDER -- //
+
 var builder = WebApplication.CreateBuilder(args);
+
+// API
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
+
+// CORS
+builder.Services.AddCorsPolicy();
 
 // DB CONTEXT
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -64,7 +72,7 @@ builder.Services.AddSingleton(new RunnerConfig()
     ImageName = "judge-cpp-runner"
 });
 
-// SERVICES
+// SERVICES PROJECT
 builder.Services.AddTransient<ICurrentUserService, CurrentUserService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IUnitService, UnitService>();
@@ -75,6 +83,8 @@ builder.Services.AddTransient<ITestCaseService, TestCaseService>();
 builder.Services.AddTransient<ICodeCompilerService, GppCodeCompilerService>();
 builder.Services.AddTransient<ICodeExecutorService, BasicExecutorService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+
+// -- APP -- //
 
 var app = builder.Build();
 
@@ -98,6 +108,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
+app.UserCorsPolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
