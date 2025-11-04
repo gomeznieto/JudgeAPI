@@ -1,13 +1,17 @@
 ﻿using AutoMapper;
+using JudgeAPI.Constants;
 using JudgeAPI.Data;
 using JudgeAPI.Entities;
 using JudgeAPI.Excerptions;
 using JudgeAPI.Models.Auth;
+using JudgeAPI.Models.Submission;
 using JudgeAPI.Models.User;
 using JudgeAPI.Services.Token;
+using JudgeAPI.Services.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace JudgeAPI.Services.Ath
 {
@@ -17,6 +21,7 @@ namespace JudgeAPI.Services.Ath
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ICurrentUserService _currentUserService;
         private readonly ITokenService _tokenService
             ;
 
@@ -25,6 +30,7 @@ namespace JudgeAPI.Services.Ath
             IMapper mapper,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
+            ICurrentUserService currentUserService,
             ITokenService tokenService
         )
         {
@@ -32,6 +38,7 @@ namespace JudgeAPI.Services.Ath
             _mapper = mapper;
             _userManager = userManager;
             _roleManager = roleManager;
+            _currentUserService = currentUserService;
             _tokenService = tokenService;
         }
 
@@ -48,7 +55,7 @@ namespace JudgeAPI.Services.Ath
          
          */
 
-        // REGISTER
+        // ---- REGISTER ---- //
         public async Task<TokenResponse> RegisterAsync(UserCreateDTO dto)
         {
             var userExist = await _userManager.FindByNameAsync(dto.Username);
@@ -77,6 +84,7 @@ namespace JudgeAPI.Services.Ath
             var roles = await _userManager.GetRolesAsync(user);
             var token = _tokenService.GenerateToken(user, roles);
 
+            // TODO: Retornar datos del usuario
             return new TokenResponse
             {
                 Token = token,
@@ -86,7 +94,7 @@ namespace JudgeAPI.Services.Ath
             };
         }
 
-        // LOGIN
+        // ---- LOGIN ---- //
         public async Task<TokenResponse> LoginAsync(LoginRequest request)
         {
             var user = await _userManager.FindByNameAsync(request.UserName);
@@ -102,14 +110,15 @@ namespace JudgeAPI.Services.Ath
             // Roles y token para armar la  respuestas
             var roles = await _userManager.GetRolesAsync(user);
             var token = _tokenService.GenerateToken(user, roles);
+            var submissionList = await _appDbContext.Submissions.Where(s => s.UserId == user.Id).ToListAsync();
 
-            return new TokenResponse
-            {
-                Token = token,
-                UserId = user.Id!,
-                UserName = user.UserName ?? "",
-                Roles = roles.ToList()
-            };
+            var tokenResponse = _mapper.Map<TokenResponse>(user);
+            tokenResponse.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList);
+            tokenResponse.Token = token;
+            tokenResponse.UserId = user.Id!;
+            tokenResponse.Roles = roles.ToList();
+
+            return tokenResponse;
         }
     }
 }

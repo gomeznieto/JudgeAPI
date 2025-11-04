@@ -9,7 +9,7 @@ namespace JudgeAPI.Models.User
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? University { get; set; }
-        public List<SubmissionResponseDTO> Submissons { get; set; } = new List<SubmissionResponseDTO>();
+        public List<SubmissionResponseDTO> Submissions { get; set; } = new List<SubmissionResponseDTO>();
 
     }
 }

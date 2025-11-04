@@ -1,7 +1,9 @@
 ﻿using JudgeAPI.Models.Auth;
 using JudgeAPI.Models.User;
 using JudgeAPI.Services.Ath;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace JudgeAPI.Controllers

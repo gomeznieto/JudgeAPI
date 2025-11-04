@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using JudgeAPI.Entities;
+using JudgeAPI.Models.Auth;
 using JudgeAPI.Models.Problem;
 using JudgeAPI.Models.Submission;
 using JudgeAPI.Models.TestCase;
 using JudgeAPI.Models.Unit;
 using JudgeAPI.Models.User;
+using Microsoft.AspNetCore.SignalR;
 using StackExchange.Redis;
 
 namespace JudgeAPI.Mapping
@@ -25,9 +27,9 @@ namespace JudgeAPI.Mapping
             CreateMap<ProblemCreateDTO, Problem>();
             CreateMap<ProblemUpdateDTO, Problem>();
 
-            // USers
+            // Users
             CreateMap<UserCreateDTO, ApplicationUser>();
-
+            CreateMap<TokenResponse, TokenResponse>();
             CreateMap<UserUpdateDTO, ApplicationUser>()
                 .ForMember(dest => dest.Email, opt => opt.Condition(src => src.Email != null))
                 .ForMember(dest => dest.FirstName, opt => opt.Condition(src => src.FirstName != null))
@@ -38,6 +40,12 @@ namespace JudgeAPI.Mapping
             CreateMap<ApplicationUser, UserPrivateDTO>();
             CreateMap<ApplicationUser, UserPublicDTO>();
             CreateMap<ApplicationUser, UserAdminDTO>();
+
+            CreateMap<ApplicationUser, TokenResponse>()
+                .ForMember(dest => dest.Email, opt => opt.Condition(src => src.Email != null))
+                .ForMember(dest => dest.FirstName, opt => opt.Condition(src => src.FirstName != null))
+                .ForMember(dest => dest.LastName, opt => opt.Condition(src => src.LastName != null))
+                .ForMember(dest => dest.University, opt => opt.Condition(src => src.University != null));
 
             // Submissions
             CreateMap<SubmissionCreateDTO, Submission>();

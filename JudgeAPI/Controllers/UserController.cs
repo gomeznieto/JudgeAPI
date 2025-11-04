@@ -14,10 +14,12 @@ namespace JudgeAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ICurrentUserService _current;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, ICurrentUserService current)
         {
             _userService = userService;
+            _current = current;
         }
 
         [HttpGet("{id:guid}", Name = "GetUserById")]
@@ -29,6 +31,15 @@ namespace JudgeAPI.Controllers
             var user = await _userService.GetUserByIdAsync(id);
 
             return Ok(user);
+        }
+
+        [HttpGet("me")]
+        [ProducesResponseType(typeof(UserPublicDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserPrivateDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserAdminDTO), StatusCodes.Status200OK)]
+        public async Task<ActionResult<UserBaseDTO>> currentUser()
+        {
+            return await _userService.GetCurrectUser();
         }
 
         [HttpPut("{userid:guid}")]

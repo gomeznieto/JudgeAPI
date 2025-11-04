@@ -32,7 +32,7 @@ namespace JudgeAPI.Services.User
             _mapper = mapper;
         }
 
-        // GET BY ID
+        // ---- GET BY ID ---- //
         public async Task<UserBaseDTO> GetUserByIdAsync(string id)
         {
             // Búsqueda del user según el ID pasado
@@ -60,7 +60,7 @@ namespace JudgeAPI.Services.User
             if (user.Id == currentUserId)
             {
                 var privateUserResponse = _mapper.Map<UserPrivateDTO>(user);
-                privateUserResponse.Submissons = submissionResponseDTO;
+                privateUserResponse.Submissions = submissionResponseDTO;
                 return privateUserResponse;
             }
 
@@ -81,7 +81,13 @@ namespace JudgeAPI.Services.User
             return publicUserResponse;
         }
 
-        // UPDATE
+        public async Task<UserPrivateDTO> GetCurrectUser()
+        {
+            var user = await _currentUserService.GetCurrentUserAsync();
+            return _mapper.Map<UserPrivateDTO>(user);
+        }
+
+        // ---- UPDATE ---- //
         public async Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate)
         {
             // Usuario acutal
@@ -103,14 +109,15 @@ namespace JudgeAPI.Services.User
 
         }
 
-        // UPDATE PASSWORD
+        // ---- UPDATE PASSWORD ---- //
         public async Task<IdentityResult> ChangePasswordAsync(ChangePasswordDTO changePasswordDTO)
         {
             var user = await _currentUserService.GetCurrentUserAsync();
-
+            
             if (user is null) return IdentityResult.Failed(new IdentityError {Description = "Usuario no encontrado" });
+            var userApplication = _mapper.Map<ApplicationUser>(user);
 
-            return await _userManager.ChangePasswordAsync(user, changePasswordDTO.OldPassword, changePasswordDTO.NewPassword);
+            return await _userManager.ChangePasswordAsync(userApplication, changePasswordDTO.OldPassword, changePasswordDTO.NewPassword);
         }
     }
 }
