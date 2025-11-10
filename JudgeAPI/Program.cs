@@ -100,7 +100,6 @@ using (var scope = app.Services.CreateScope())
 {
     // ROLES
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    await RoleSeeder.SeedRoleAsync(roleManager);
 
     // ADMIN
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();

@@ -3,6 +3,9 @@ services:
     build:
       context: ./JudgeAPI
     ports: ["5000:80"]
+    volumes:
+      - ./src:/app
+    command: dotnet watch run 
     depends_on: [db]
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
