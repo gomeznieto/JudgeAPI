@@ -29,23 +29,23 @@ namespace JudgeAPI.Controllers
         public async Task<ActionResult<UserBaseDTO>> GetUserById(string id)
         {
             var user = await _userService.GetUserByIdAsync(id);
-
             return Ok(user);
         }
 
         [HttpGet("me")]
-        [ProducesResponseType(typeof(UserPublicDTO), StatusCodes.Status200OK)]
+        // [ProducesResponseType(typeof(UserPublicDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(UserPrivateDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(UserAdminDTO), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserBaseDTO>> currentUser()
         {
-            return await _userService.GetCurrectUser();
+            return await _userService.GetCurrectUser() ; 
         }
 
         [HttpPut("{userid:guid}")]
         [ProducesResponseType(typeof(UserPrivateDTO), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserBaseDTO>> UpdateUser(string userid, [FromBody] UserUpdateDTO userData)
         {
+          Console.WriteLine("Entramos al controller de edición");
             if (userData == null) throw new ArgumentNullException(nameof(userData));
 
             if (userid != userData.Id) throw new ArgumentException(nameof(userData));

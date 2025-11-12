@@ -83,8 +83,18 @@ namespace JudgeAPI.Services.User
 
         public async Task<UserPrivateDTO> GetCurrectUser()
         {
-            var user = await _currentUserService.GetCurrentUserAsync();
-            return _mapper.Map<UserPrivateDTO>(user);
+            var userManager = await _currentUserService.GetCurrentUserAsync(); 
+            
+            var roles = await _userManager.GetRolesAsync(userManager);
+            var submissionList = _dbContext.Submissions.Where(s => s.UserId == userManager.Id).ToList();
+
+            var userResponse = _mapper.Map<UserPrivateDTO>(userManager);
+
+            userResponse.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList); 
+            userResponse.UserId = userManager.Id!;
+            userResponse.Roles = roles.ToList();
+
+            return userResponse; 
         }
 
         // ---- UPDATE ---- //
@@ -103,6 +113,7 @@ namespace JudgeAPI.Services.User
 
             _mapper.Map(userUpdate, currentUser);
 
+            _dbContext.Users.Update(_mapper.Map<ApplicationUser>(currentUser));
             await _dbContext.SaveChangesAsync();
 
             return _mapper.Map<UserPrivateDTO>(currentUser);

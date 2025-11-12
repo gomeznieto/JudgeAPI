@@ -17,14 +17,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Text;
+using DotNetEnv;
 
+// -- ENV -- //
+Env.Load();
 
 // -- BUILDER -- //
-
 var builder = WebApplication.CreateBuilder(args);
 
 // API
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 

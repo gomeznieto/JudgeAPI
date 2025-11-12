@@ -3,10 +3,9 @@ using Azure.Core;
 using JudgeAPI.Data;
 using JudgeAPI.Entities;
 using JudgeAPI.Models.Auth;
+using JudgeAPI.Models.User;
 using JudgeAPI.Models.Submission;
-using JudgeAPI.Services.Token;
 using Microsoft.AspNetCore.Identity;
-using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 
 namespace JudgeAPI.Services.User
@@ -31,38 +30,30 @@ namespace JudgeAPI.Services.User
             _mapper = mapper;
         }
 
-        public async Task<TokenResponse> GetCurrentUserAsync()
+        public async Task<ApplicationUser> GetCurrentUserAsync()
         {
             var user = _httpContextAccessor.HttpContext?.User;
             
             var userManager = user != null ? await _userManager.GetUserAsync(user) : null;
-
+            
             if (userManager is null) return null;
 
-            var roles = await _userManager.GetRolesAsync(userManager);
-            var submissionList = _appDbContext.Submissions.Where(s => s.UserId == userManager.Id).ToList();
-
-            var tokenResponse = _mapper.Map<TokenResponse>(userManager);
-            tokenResponse.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList); 
-            tokenResponse.UserId = userManager.Id!;
-            tokenResponse.Roles = roles.ToList();
-
-            return tokenResponse;
+            return userManager;
         }
 
         public string? GetCurrentUserId()
         {
-            return _httpContextAccessor.HttpContext?.User
-                .FindFirstValue(ClaimTypes.NameIdentifier);
+          return _httpContextAccessor.HttpContext?.User
+            .FindFirstValue(ClaimTypes.NameIdentifier);
         }
 
         public IList<string> GetCurrentUserRole()
         {
-            var user = _httpContextAccessor.HttpContext?.User;
+          var user = _httpContextAccessor.HttpContext?.User;
 
-            if (user is null) return [];
+          if (user is null) return [];
 
-            return user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+          return user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
         }
     }
 }

@@ -6,8 +6,6 @@ using JudgeAPI.Models.Submission;
 using JudgeAPI.Models.TestCase;
 using JudgeAPI.Models.Unit;
 using JudgeAPI.Models.User;
-using Microsoft.AspNetCore.SignalR;
-using StackExchange.Redis;
 
 namespace JudgeAPI.Mapping
 {
@@ -29,13 +27,19 @@ namespace JudgeAPI.Mapping
 
             // Users
             CreateMap<UserCreateDTO, ApplicationUser>();
-            CreateMap<TokenResponse, TokenResponse>();
+            CreateMap<UserPrivateDTO, ApplicationUser>();
             CreateMap<UserUpdateDTO, ApplicationUser>()
                 .ForMember(dest => dest.Email, opt => opt.Condition(src => src.Email != null))
                 .ForMember(dest => dest.FirstName, opt => opt.Condition(src => src.FirstName != null))
                 .ForMember(dest => dest.LastName, opt => opt.Condition(src => src.LastName != null))
                 .ForMember(dest => dest.University, opt => opt.Condition(src => src.University != null))
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
+
+            CreateMap<UserUpdateDTO, UserPrivateDTO>()
+                .ForMember(dest => dest.Email, opt => opt.Condition(src => src.Email != null))
+                .ForMember(dest => dest.FirstName, opt => opt.Condition(src => src.FirstName != null))
+                .ForMember(dest => dest.LastName, opt => opt.Condition(src => src.LastName != null))
+                .ForMember(dest => dest.University, opt => opt.Condition(src => src.University != null));
 
             CreateMap<ApplicationUser, UserPrivateDTO>();
             CreateMap<ApplicationUser, UserPublicDTO>();
