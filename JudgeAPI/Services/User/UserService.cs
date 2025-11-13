@@ -7,7 +7,6 @@ using JudgeAPI.Models.Submission;
 using JudgeAPI.Models.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace JudgeAPI.Services.User
 {
@@ -35,31 +34,30 @@ namespace JudgeAPI.Services.User
         // ---- GET BY ID ---- //
         public async Task<UserBaseDTO> GetUserByIdAsync(string id)
         {
-            // Búsqueda del user según el ID pasado
-            var user = await _userManager.FindByIdAsync(id);
+            // -- Busca Usuario por Id 
+            var currentUser = await _currentUserService.GetUserByIdAsync(id);
 
-            if (user is null) throw new NotFoundException($"El usuario no encontrado");
+            if (currentUser is null) throw new NotFoundException($"El usuario no encontrado");
 
-            var roles = await _userManager.GetRolesAsync(user);
-            // --------------------------------
+            var roles = await _currentUserService.GetUserRolesByIdAsync(currentUser);
 
-            // Buscamos al usurio que realiza la consula y está regisrado con token
+            // -- Usuario que realiza la consulta
             var currentUserId = _currentUserService.GetCurrentUserId();
             var currentUserRoles = _currentUserService.GetCurrentUserRole();
             // --------------------------------
 
-            // Si un usuario No admin busca el profile de un usuaior admin
+            // Si un usuario No admin busca el profile de un usuario admin
             if (roles.Contains(Roles.Admin) && !currentUserRoles.Contains(Roles.Admin))
                 throw new ForbiddenException($"No tiene permisos para acceder a este profile");
 
-            // Bsucamos submission Result del usuario a buscar
+            // Buscamos submission Result del usuario a buscar
             var submissionUser = await _dbContext.Submissions.Where(x => x.UserId == id).ToListAsync();
             var submissionResponseDTO = _mapper.Map<List<SubmissionResponseDTO>>(submissionUser);
 
             // Si el usuario mira su propio profile
-            if (user.Id == currentUserId)
+            if (currentUser.Id == currentUserId)
             {
-                var privateUserResponse = _mapper.Map<UserPrivateDTO>(user);
+                var privateUserResponse = _mapper.Map<UserPrivateDTO>(currentUser);
                 privateUserResponse.Submissions = submissionResponseDTO;
                 return privateUserResponse;
             }
@@ -67,31 +65,34 @@ namespace JudgeAPI.Services.User
             // Si el usuario actual tiene permisos de admin
             if (currentUserRoles.Contains(Roles.Admin))
             {
-                if (user.Id != currentUserId)
+                if (currentUser.Id != currentUserId)
                     throw new ForbiddenException("No tiene permisos para acceder a este profile");
 
-                var adminUserResponse = _mapper.Map<UserAdminDTO>(user);
+                var adminUserResponse = _mapper.Map<UserAdminDTO>(currentUser);
                 adminUserResponse.Submissons = submissionResponseDTO;
                 return adminUserResponse;
             }
 
             // Si un usuario Admin o no admin, busca el profile de otro usuario
-            var publicUserResponse = _mapper.Map<UserPublicDTO>(user);
+            var publicUserResponse = _mapper.Map<UserPublicDTO>(currentUser);
             publicUserResponse.Submissons = submissionResponseDTO;
             return publicUserResponse;
         }
 
+        // -- RETORNAR USUARIO ACTUAL LOGEADO -- //
         public async Task<UserPrivateDTO> GetCurrectUser()
         {
-            var userManager = await _currentUserService.GetCurrentUserAsync(); 
+            var currentUser = await _currentUserService.GetCurrentUserAsync(); 
+            var roles = _currentUserService.GetCurrentUserRole();
             
-            var roles = await _userManager.GetRolesAsync(userManager);
-            var submissionList = _dbContext.Submissions.Where(s => s.UserId == userManager.Id).ToList();
+            var submissionList = _dbContext.Submissions.Where(s => s.UserId == currentUser.Id).ToList();
 
-            var userResponse = _mapper.Map<UserPrivateDTO>(userManager);
+            // Armamos respuesta
+            var userResponse = _mapper.Map<UserPrivateDTO>(currentUser);
 
             userResponse.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList); 
-            userResponse.UserId = userManager.Id!;
+
+            userResponse.UserId = currentUser.Id!;
             userResponse.Roles = roles.ToList();
 
             return userResponse; 
@@ -100,35 +101,49 @@ namespace JudgeAPI.Services.User
         // ---- UPDATE ---- //
         public async Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate)
         {
-            // Usuario acutal
+            // Traemos Id del usuario actual
             var currentUserId = _currentUserService.GetCurrentUserId();
 
+            // Verificamos que los Id del actual y el usuario a actualizar sean los mismos
             if (currentUserId != userUpdate.Id)
                 throw new ForbiddenException($"No tiene permiso para realizar modficiaciones en el usuario {userUpdate.Id}");
 
-            // Obtenemos el usuario solo si sabemos que se trata del mismo
+            // Traemos los datos completos almacenados del usuario 
             var currentUser = await _currentUserService.GetCurrentUserAsync();
 
             if (currentUser is null) throw new NotFoundException($"El usuario no encontrado");
 
+            // Mapeamos los datos almacenados con los actuales.
             _mapper.Map(userUpdate, currentUser);
 
+            // Guardamos el usuario
             _dbContext.Users.Update(_mapper.Map<ApplicationUser>(currentUser));
             await _dbContext.SaveChangesAsync();
 
-            return _mapper.Map<UserPrivateDTO>(currentUser);
+            // Armamos la respuesta
+            var roles = _currentUserService.GetCurrentUserRole();
+            var submissionList = _dbContext.Submissions.Where(s => s.UserId == currentUser.Id).ToList();
+
+            var updatedUser =  _mapper.Map<UserPrivateDTO>(currentUser);
+
+            updatedUser.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList); 
+
+            updatedUser.UserId = currentUser.Id!;
+            updatedUser.Roles = roles.ToList();
+
+            return updatedUser;
 
         }
 
         // ---- UPDATE PASSWORD ---- //
         public async Task<IdentityResult> ChangePasswordAsync(ChangePasswordDTO changePasswordDTO)
         {
-            var user = await _currentUserService.GetCurrentUserAsync();
-            
-            if (user is null) return IdentityResult.Failed(new IdentityError {Description = "Usuario no encontrado" });
-            var userApplication = _mapper.Map<ApplicationUser>(user);
+          var user = await _currentUserService.GetCurrentUserAsync();
 
-            return await _userManager.ChangePasswordAsync(userApplication, changePasswordDTO.OldPassword, changePasswordDTO.NewPassword);
+          if (user is null) return IdentityResult.Failed(new IdentityError {Description = "Usuario no encontrado" });
+          var userApplication = _mapper.Map<ApplicationUser>(user);
+
+          return await _userManager.ChangePasswordAsync(userApplication, changePasswordDTO.OldPassword, changePasswordDTO.NewPassword);
         }
     }
 }
