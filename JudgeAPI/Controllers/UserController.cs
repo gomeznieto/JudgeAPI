@@ -66,11 +66,11 @@ namespace JudgeAPI.Controllers
           // TODO: Pensar en este endpoint para obtener los mejores 10 de cada ejercicios o un ranking general basado en submissions
           return Ok();
         }
-
+        
+        // -- CAMBIAR PASSWORD -- //
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
         {
-
           if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
@@ -84,7 +84,7 @@ namespace JudgeAPI.Controllers
                 });
           }
 
-          return Ok(new { Message = "Password changed successfully" });
+          return Ok(new { Error = false, Message = "Password changed successfully" });
         }
     }
 }

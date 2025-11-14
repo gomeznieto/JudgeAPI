@@ -11,7 +11,7 @@ namespace JudgeAPI.Models.User
         [MinLength(6)]
         public string NewPassword { get; set; } = string.Empty;
 
-        [Compare("NewPassword", ErrorMessage = "Las constraseñas no coincden")]
-        public string ConfirmPassword { get; set; } = string.Empty;
+        // [Compare("NewPassword", ErrorMessage = "Las constraseñas no coincden")]
+        // public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

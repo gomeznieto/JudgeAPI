@@ -138,9 +138,11 @@ namespace JudgeAPI.Services.User
         // ---- UPDATE PASSWORD ---- //
         public async Task<IdentityResult> ChangePasswordAsync(ChangePasswordDTO changePasswordDTO)
         {
+          // Obtenemos el usuario del token
           var user = await _currentUserService.GetCurrentUserAsync();
 
           if (user is null) return IdentityResult.Failed(new IdentityError {Description = "Usuario no encontrado" });
+
           var userApplication = _mapper.Map<ApplicationUser>(user);
 
           return await _userManager.ChangePasswordAsync(userApplication, changePasswordDTO.OldPassword, changePasswordDTO.NewPassword);
