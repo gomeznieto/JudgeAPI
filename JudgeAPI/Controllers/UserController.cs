@@ -71,6 +71,7 @@ namespace JudgeAPI.Controllers
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
         {
+          Console.WriteLine($"[PASSEORD] {dto.OldPassword} {dto.NewPassword}");
           if (!ModelState.IsValid)
             return BadRequest(ModelState);
 

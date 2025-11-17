@@ -83,8 +83,7 @@ namespace JudgeAPI.Services.User
         public async Task<UserPrivateDTO> GetCurrectUser()
         {
             var currentUser = await _currentUserService.GetCurrentUserAsync(); 
-            var roles = _currentUserService.GetCurrentUserRole();
-            
+            var roles = _currentUserService.GetCurrentUserRole();            
             var submissionList = _dbContext.Submissions.Where(s => s.UserId == currentUser.Id).ToList();
 
             // Armamos respuesta
