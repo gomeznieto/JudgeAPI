@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using JudgeAPI.Constants;
 using JudgeAPI.Data;
 using JudgeAPI.Entities;
 using JudgeAPI.Excerptions;
@@ -9,9 +8,7 @@ using JudgeAPI.Models.User;
 using JudgeAPI.Services.Token;
 using JudgeAPI.Services.User;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace JudgeAPI.Services.Ath
 {
@@ -22,8 +19,7 @@ namespace JudgeAPI.Services.Ath
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ICurrentUserService _currentUserService;
-        private readonly ITokenService _tokenService
-            ;
+        private readonly ITokenService _tokenService;
 
         public AuthService(
             AppDbContext appDbContext,

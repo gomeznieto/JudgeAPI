@@ -30,6 +30,7 @@ namespace JudgeAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<UnitResponseDTO>> Post([FromBody]UnitCreateDTO unitDTO)
         {
+          Console.WriteLine(unitDTO.Name);
             var responseDTO = await _unitService.CreateAsync(unitDTO);
             return CreatedAtAction(nameof(GetUnit), new {id = responseDTO.Id}, responseDTO);
 

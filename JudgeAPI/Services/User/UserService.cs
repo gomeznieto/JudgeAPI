@@ -85,7 +85,7 @@ namespace JudgeAPI.Services.User
             var currentUser = await _currentUserService.GetCurrentUserAsync(); 
             var roles = _currentUserService.GetCurrentUserRole();            
             var submissionList = _dbContext.Submissions.Where(s => s.UserId == currentUser.Id).ToList();
-
+            
             // Armamos respuesta
             var userResponse = _mapper.Map<UserPrivateDTO>(currentUser);
 
