@@ -1,8 +1,4 @@
-﻿using JudgeAPI.Entities;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace JudgeAPI.Models.Problem
+﻿namespace JudgeAPI.Models.Problem
 {
     public class ProblemResponseDTO
     {

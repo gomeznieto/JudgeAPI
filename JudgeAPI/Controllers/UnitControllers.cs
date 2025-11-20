@@ -1,10 +1,7 @@
-﻿using JudgeAPI.Data;
-using JudgeAPI.Entities;
-using JudgeAPI.Models.Unit;
+﻿using JudgeAPI.Models.Unit;
 using JudgeAPI.Services.Unit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace JudgeAPI.Controllers
 {

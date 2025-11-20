@@ -9,6 +9,7 @@ namespace JudgeAPI.Entities
         [Required]
         public int Number { get; set; }
         public string? Description { get; set; }
+        public bool isActivate { get; set; } = true;
         public ICollection<Problem>? Problems { get; set; }
     }
 }
