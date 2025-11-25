@@ -7,6 +7,7 @@ using JudgeAPI.Models.Submission;
 using JudgeAPI.Models.User;
 using JudgeAPI.Services.Token;
 using JudgeAPI.Services.User;
+using JudgeAPI.Constants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -70,22 +71,24 @@ namespace JudgeAPI.Services.Ath
             }
 
             // Roles. Si no existe lo creamos la primera vez.
-            var roleExists = await _roleManager.RoleExistsAsync("User");
+            var roleExists = await _roleManager.RoleExistsAsync(Roles.Student);
             if (!roleExists)
-                await _roleManager.CreateAsync(new IdentityRole("User"));
+                await _roleManager.CreateAsync(new IdentityRole(Roles.Student));
 
-            await _userManager.AddToRoleAsync(user, "User");
+            await _userManager.AddToRoleAsync(user, Roles.Student);
 
             // Obtenemos Roles y token para colocar en la respuesta
             var roles = await _userManager.GetRolesAsync(user);
             var token = _tokenService.GenerateToken(user, roles);
 
-            // TODO: Retornar datos del usuario
             return new TokenResponse
             {
                 Token = token,
                 UserId = user.Id!,
                 UserName = user.UserName ?? "",
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
                 Roles = roles.ToList()
             };
         }

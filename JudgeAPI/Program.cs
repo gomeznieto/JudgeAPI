@@ -14,9 +14,7 @@ using JudgeAPI.Services.Unit;
 using JudgeAPI.Services.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
-using System.Text;
 using DotNetEnv;
 
 // -- ENV -- //
@@ -101,6 +99,7 @@ using (var scope = app.Services.CreateScope())
 {
     // ROLES
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await RoleSeeder.SeedRoleAsync(roleManager);
 
     // ADMIN
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
