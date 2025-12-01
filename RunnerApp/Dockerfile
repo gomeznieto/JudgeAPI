@@ -1,5 +1,5 @@
 ﻿# ===== BUILD =====
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copiar y restaurar
@@ -18,7 +18,7 @@ WORKDIR /src/RunnerApp
 RUN dotnet publish -c Release -o /app/publish -p:UseAppHost=false
 
 # ===== RUNTIME =====
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
 COPY --from=build /app/publish .
