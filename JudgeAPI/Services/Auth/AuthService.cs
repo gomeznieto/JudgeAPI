@@ -11,7 +11,7 @@ using JudgeAPI.Constants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace JudgeAPI.Services.Ath
+namespace JudgeAPI.Services.Auth
 {
     public class AuthService : IAuthService
     {

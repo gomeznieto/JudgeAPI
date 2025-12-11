@@ -26,9 +26,10 @@ namespace JudgeAPI.Controllers
             return Ok(response);
         }
 
-        [HttpPost("/api/problems/{problemId}/testcases")]
+          [HttpPost("/api/problems/{problemId}/testcases")]
         public async Task<ActionResult<TestCaseResponseDTO>> Post(int problemId, [FromBody]TestCaseCreateDTO create)
         {
+            Console.WriteLine("Entramos");
             var response = await _testCaseService.CreateTestCaseAsync(problemId, create);
             return CreatedAtAction(nameof(GetById), new { problemId, id = response.Id }, response);
         }

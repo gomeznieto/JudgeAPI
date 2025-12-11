@@ -4,7 +4,7 @@ using JudgeAPI.Entities;
 using JudgeAPI.Extensions;
 using JudgeAPI.Infrastructure.Seed;
 using JudgeAPI.Middleware;
-using JudgeAPI.Services.Ath;
+using JudgeAPI.Services.Auth;
 using JudgeAPI.Services.Execution;
 using JudgeAPI.Services.Problem;
 using JudgeAPI.Services.Submissions;
@@ -50,8 +50,9 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAutoMapper(typeof(Program));
 
 // REDIS
+var redisConnection = builder.Configuration["Redis:Connection"];
 builder.Services.AddSingleton<IConnectionMultiplexer>(
-    sp => ConnectionMultiplexer.Connect("redis:6379")
+    sp => ConnectionMultiplexer.Connect(redisConnection)
 );
 
 // RUNNER MODE

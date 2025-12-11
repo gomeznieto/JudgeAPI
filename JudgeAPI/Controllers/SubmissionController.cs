@@ -27,6 +27,8 @@ namespace JudgeAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<SubmissionResponseDTO>> Submit(int problemId, SubmissionCreateDTO create)
         {
+
+            Console.WriteLine("Entramos ", create);
             var userId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (userId == null)
@@ -43,6 +45,7 @@ namespace JudgeAPI.Controllers
         [HttpGet("{submissionId:int}")]
         public async Task<ActionResult<SubmissionResponseWrapper>> GetSubmission(int submissionId)
         {
+            Console.WriteLine("Entramos ", submissionId);
             var response = await _submissionService.GetSubmissionAsync(submissionId);
 
             if (response == null)
