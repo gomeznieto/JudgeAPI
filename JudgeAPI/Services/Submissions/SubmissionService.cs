@@ -53,7 +53,7 @@ namespace JudgeAPI.Services.Submissions
 
             var submissionWrapper = new SubmissionResponseWrapper()
             {
-                Verdict = result.Verdict
+                Verdict = result.Verdict,
             };
 
             if (submissionWrapper.IsPending)
