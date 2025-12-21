@@ -1,0 +1,13 @@
+
+services:
+  api:
+    build:
+      context: ./JudgeAPI
+    ports:
+      - "5000:80"
+    command: dotnet run
+    depends_on:
+      - db
+    env_file:
+      - .env
+    restart: unless-stopped
