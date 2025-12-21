@@ -11,3 +11,15 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+
+ db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: ${SA_PASSWORD}
+      ACCEPT_EULA: "Y"
+    volumes:
+      - sqlvolume:/var/opt/mssql
+    restart: unless-stopped
+
+volumes:
+  sqlvolume: 
