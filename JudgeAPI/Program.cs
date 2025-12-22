@@ -134,7 +134,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UserCorsPolicy();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/api/health");
 app.MapControllers();
 
 app.Run();
