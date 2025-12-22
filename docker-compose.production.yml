@@ -20,6 +20,25 @@ services:
       - sqlvolume:/var/opt/mssql
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
+  runner:
+    user: root
+    build:
+      context: .
+      dockerfile: RunnerApp/Dockerfile
+    volumes:
+      - jobsdata:/app/jobs
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - redis
+    restart: unless-stopped
+
 volumes:
   sqlvolume:
-
+  redisdata:
+  jobsdata:
