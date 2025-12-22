@@ -93,7 +93,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 var app = builder.Build();
 
 // MIGRATE AL INICIAR SERVICIO
-const int maxRetries = 10;
+const int maxRetries = 20;
 const int delaySeconds = 5;
 
 using (var scope = app.Services.CreateScope())

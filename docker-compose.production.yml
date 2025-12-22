@@ -3,7 +3,7 @@ services:
     build:
       context: ./JudgeAPI
     ports:
-      - "5000:80"
+      - "5500:5500"
     command: dotnet run
     depends_on:
       - db
