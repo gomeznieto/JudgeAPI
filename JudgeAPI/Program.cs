@@ -23,6 +23,11 @@ Env.Load();
 // -- BUILDER -- //
 var builder = WebApplication.CreateBuilder(args);
 
+// --------- SERVICES --------- //
+
+// HEALTHCHECKER
+builder.Services.AddHealthChecks();
+
 // API
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
@@ -84,33 +89,52 @@ builder.Services.AddTransient<ICodeCompilerService, GppCodeCompilerService>();
 builder.Services.AddTransient<ICodeExecutorService, BasicExecutorService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-// -- APP -- //
-
+// --------- APP --------- //
 var app = builder.Build();
 
 // MIGRATE AL INICIAR SERVICIO
+const int maxRetries = 10;
+const int delaySeconds = 5;
+
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+  var attempt = 0;
+  while(true){
+    try{
+      attempt++;
+      db.Database.Migrate();
+      break;
+    } catch(Exception ex) {
+      if(attempt >= maxRetries){
+        throw;
+      }
+
+      Console.WriteLine($"[Start] La DB no está lista. Retry {attempt}/{maxRetries} en {delaySeconds}s");
+    }
+
+    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+  }
 }
 
 // INICIAMOS CARGA A LA DB
 using (var scope = app.Services.CreateScope())
 {
-    // ROLES
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    await RoleSeeder.SeedRoleAsync(roleManager);
+  // ROLES
+  var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+  await RoleSeeder.SeedRoleAsync(roleManager);
 
-    // ADMIN
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    await UserSeeder.SeedAdminAsync(userManager);
+  // ADMIN
+  var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+  await UserSeeder.SeedAdminAsync(userManager);
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UserCorsPolicy();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();
