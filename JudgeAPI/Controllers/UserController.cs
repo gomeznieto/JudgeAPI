@@ -52,6 +52,26 @@ namespace JudgeAPI.Controllers
 
           return Ok(userResponse);
         }
+        
+        // -- UPDATE ROL DE USUARIO -- //
+        [HttpPut("{userid:guid}/roles")]
+        [ProducesResponseType(typeof(UserPrivateDTO), StatusCodes.Status200OK)]
+        public async Task<ActionResult<UserBaseDTO>> UpdateUser(string userid, [FromBody] UserUpdateRolesDTO userUpdateRoles)
+        {
+          if (userUpdateRoles == null) throw new ArgumentNullException(nameof(userUpdateRoles));
+          if (userUpdateRoles.Id != userid) throw new ArgumentNullException(nameof(userUpdateRoles));
+
+          var userResponse = await _userService.UpdateUserRoles(userUpdateRoles);
+
+          return Ok(userResponse);
+        }
+
+        // ---- GET ALL USERS ---- //
+        [HttpGet("/users")]
+        public async Task<UsersResponseDTO> getAllUsers()
+        {
+          return await _userService.GetUsersAsync();
+        }
 
         [HttpDelete("{id:guid}")]
         public IActionResult DeleteUser(int id)
@@ -67,6 +87,12 @@ namespace JudgeAPI.Controllers
           return Ok();
         }
         
+        [HttpGet("/roles")]
+        public async Task<RolesResponseDTO> GetRoles()
+        {
+          return await _userService.GetRolesAsync();
+        }
+
         // -- CAMBIAR PASSWORD -- //
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)

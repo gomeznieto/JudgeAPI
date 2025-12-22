@@ -9,5 +9,8 @@ namespace JudgeAPI.Services.User
         Task<UserPrivateDTO> GetCurrectUser();
         Task<UserBaseDTO> GetUserByIdAsync(string id);
         Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate);
+        Task<UserPublicDTO> UpdateUserRoles(UserUpdateRolesDTO userUpdateRoles);
+        Task<RolesResponseDTO> GetRolesAsync();
+        Task<UsersResponseDTO> GetUsersAsync();
     }
 }
