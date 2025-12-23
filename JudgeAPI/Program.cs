@@ -38,7 +38,8 @@ builder.Services.AddCorsPolicy();
 // DB CONTEXT
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)));
+        sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null))
+);
 
 // DB IDENTITY
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()

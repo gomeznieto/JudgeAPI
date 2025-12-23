@@ -2,16 +2,13 @@ services:
   api:
     build:
       context: ./JudgeAPI
-    ports: ["5000:80"]
-    volumes:
-      - ./src:/app
-    command: dotnet watch run 
-    depends_on: [db]
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=JudgeDb;User=sa;Password=Your_password123;TrustServerCertificate=true;
-      - ADMIN_MAIL=admin@mail.com
-      - ADMIN_PASSWORD=SuperFuerteYSecreto123!
+    ports:
+      - "5000:8080"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env.local
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
@@ -26,7 +23,7 @@ services:
     image: redis:7-alpine
     ports: ["6378:6379"]
     volumes:
-    - redisdata:/data
+      - redisdata:/data
 
   runner:
     user: root

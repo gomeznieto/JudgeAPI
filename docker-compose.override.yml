@@ -29,12 +29,11 @@ services:
       dockerfile: Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:80
       ConnectionStrings__DefaultConnection: "Server=db;Database=JudgeDb;User Id=sa;Password=Your_password123;TrustServerCertificate=true;"
       Redis__Connection: "redis:6379"
       ASPNETCORE_DETAILEDERRORS: "true"
     ports:
-      - "5000:80"
+      - "5000:8080"
     depends_on:
       db:
         condition: service_healthy

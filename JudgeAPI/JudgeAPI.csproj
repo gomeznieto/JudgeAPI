@@ -22,10 +22,10 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
 		<PackageReference Include="StackExchange.Redis" Version="2.9.11" />
-	</ItemGroup>
+  </ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="CppRunnerImage\" />
-	</ItemGroup>
+  <ItemGroup>
+    <Folder Include="CppRunnerImage\" />
+  </ItemGroup>
 
 </Project>
