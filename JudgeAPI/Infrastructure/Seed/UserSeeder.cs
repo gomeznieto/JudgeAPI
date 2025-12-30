@@ -11,7 +11,6 @@ namespace JudgeAPI.Infrastructure.Seed
             string? adminEmail = Environment.GetEnvironmentVariable("ADMIN_MAIL") ?? "admin@mail.com";
             string? adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "superfuerteysecreto123!";
 
-              Console.WriteLine("EMAIL: " + adminEmail);
             if (string.IsNullOrWhiteSpace(adminPassword) || string.IsNullOrEmpty(adminEmail))
                 throw new Exception("ADMIN_PASSWORD o ADMIN_MAIL no está configurado en las variables de entorno.");
 

@@ -2,13 +2,18 @@ services:
   api:
     build:
       context: ./JudgeAPI
+      dockerfile: Dockerfile.dev
     ports:
       - "5000:8080"
+    volumes:
+      - ./JudgeAPI:/app
+    env_file:
+      - .env.local
+    environment:
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
     depends_on:
       - db
       - redis
-    env_file:
-      - .env.local
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest

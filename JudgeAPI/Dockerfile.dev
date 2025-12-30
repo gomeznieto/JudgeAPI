@@ -1,0 +1,13 @@
+
+FROM mcr.microsoft.com/dotnet/sdk:9.0
+
+WORKDIR /app
+
+# Copiamos solo el csproj para cachear restore
+COPY JudgeAPI.csproj ./
+RUN dotnet restore
+
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+
+CMD ["dotnet", "watch", "run", "--no-launch-profile"]

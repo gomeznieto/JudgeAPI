@@ -7,7 +7,6 @@ using JudgeAPI.Models.Submission;
 using JudgeAPI.Models.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
 namespace JudgeAPI.Services.User
 {
     public class UserService : IUserService
@@ -164,18 +163,61 @@ namespace JudgeAPI.Services.User
       }
 
       // ---- GET USERS ---- //
-      public async Task<UsersResponseDTO> GetUsersAsync()
+      public async Task<UsersResponseDTO> GetUsersAsync(int page = 1, int totalPerPage = 20)
       {
-        var users = await _userManager.Users.Select( u => new UserDTO{Id = u.Id!, UserName = u.UserName!, FirstName = u.FirstName, LastName = u.LastName}).ToListAsync();
+        Console.WriteLine("[INFO PAGINACION] "  + page + " " + totalPerPage);
+        var baseQuery = _userManager.Users
+          .Select(u => new {
+              Id = u.Id!,
+              UserName = u.UserName!,
+              FirstName = u.FirstName,
+              LastName = u.LastName,
+              IsActive = u.IsActive
+              });
+
+        var total = await baseQuery.CountAsync();
+
+        var users = await baseQuery
+          .Skip((page - 1) * totalPerPage)
+          .Take(totalPerPage)
+          .ToListAsync();
+
+        var usersId = users.Select(u => u.Id).ToList();
+
+        var roles = await (from ur in _dbContext.UserRoles
+            join r in _dbContext.Roles on ur.RoleId equals r.Id
+            where usersId.Contains(ur.UserId)
+            select new {ur.UserId, r.Name}
+            ).ToListAsync();
+
+
+        var result = users.Select(u =>  new UserDTO
+            {
+            Id = u.Id,
+            FirstName = u.FirstName,
+            LastName = u.LastName,
+            IsActive = u.IsActive,
+            Roles = roles.Where(r => r.UserId == u.Id)
+            .Select(r => r.Name!)
+            .ToList()
+            }).ToList();
+
+        var totalPages = (int)Math.Ceiling((double)total / totalPerPage);
+
         return new UsersResponseDTO
-        {
-          Users = users
+        {     
+          Page = page,
+          TotalPages = totalPages,
+          TotalPerPage = totalPerPage,
+          TotalAmount = total, 
+          Users = result
         };
       }
 
       // ---- GET ROLES ---- //
       public async Task <RolesResponseDTO> GetRolesAsync(){
         var roles = await _roleManager.Roles.Select( r => new RoleDTO{ Name = r.Name!}).ToListAsync();
+
         return new RolesResponseDTO{
           Roles = roles
         };

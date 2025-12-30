@@ -94,28 +94,38 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 var app = builder.Build();
 
 // MIGRATE AL INICIAR SERVICIO
-const int maxRetries = 20;
-const int delaySeconds = 5;
-
 using (var scope = app.Services.CreateScope())
 {
   var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+  const int maxRetries = 20;
+  const int delaySeconds = 5;
+
   var attempt = 0;
-  while(true){
-    try{
+  while (true)
+  {
+    try
+    {
       attempt++;
+
+      // Fuerza conexión real
+      await db.Database.OpenConnectionAsync();
+      await db.Database.CloseConnectionAsync();
+
       db.Database.Migrate();
       break;
-    } catch(Exception ex) {
-      if(attempt >= maxRetries){
-        throw;
-      }
-
-      Console.WriteLine($"[Start] La DB no está lista. Retry {attempt}/{maxRetries} en {delaySeconds}s");
     }
+    catch
+    {
+      if (attempt >= maxRetries)
+        throw;
 
-    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+      Console.WriteLine(
+          $"[Start] La DB no está lista. Retry {attempt}/{maxRetries} en {delaySeconds}s"
+          );
+
+      await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+    }
   }
 }
 

@@ -11,6 +11,6 @@ namespace JudgeAPI.Services.User
         Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate);
         Task<UserPublicDTO> UpdateUserRoles(UserUpdateRolesDTO userUpdateRoles);
         Task<RolesResponseDTO> GetRolesAsync();
-        Task<UsersResponseDTO> GetUsersAsync();
+        Task<UsersResponseDTO> GetUsersAsync(int page = 1, int totalPerPage = 20);
     }
 }

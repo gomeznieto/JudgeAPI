@@ -26,7 +26,7 @@ services:
   api:
     build:
       context: ./JudgeAPI
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Server=db;Database=JudgeDb;User Id=sa;Password=Your_password123;TrustServerCertificate=true;"

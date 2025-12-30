@@ -67,7 +67,7 @@ namespace JudgeAPI.Controllers
         }
 
         // ---- GET ALL USERS ---- //
-        [HttpGet("/users")]
+        [HttpGet("all")]
         public async Task<UsersResponseDTO> getAllUsers()
         {
           return await _userService.GetUsersAsync();
@@ -87,7 +87,7 @@ namespace JudgeAPI.Controllers
           return Ok();
         }
         
-        [HttpGet("/roles")]
+        [HttpGet("roles")]
         public async Task<RolesResponseDTO> GetRoles()
         {
           return await _userService.GetRolesAsync();
