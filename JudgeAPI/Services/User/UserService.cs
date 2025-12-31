@@ -140,13 +140,30 @@ namespace JudgeAPI.Services.User
 
         if(user == null) throw new NotFoundException("Usuario no encontrado");
 
+        var currentUserRoles = await _userManager.GetRolesAsync(user);
+
+        // Agregamos roles nuevos
         foreach(var rol in userUpdateRoles.Roles.Distinct()){
           if(!await _roleManager.RoleExistsAsync(rol)) throw new NotFoundException($"Rol inválido: {rol}");
 
           if(!await _userManager.IsInRoleAsync(user, rol)) await _userManager.AddToRoleAsync(user, rol);
         }
-        
-        return _mapper.Map<UserPublicDTO>(user);
+
+        // Eliminamos los roles que no están
+        foreach(var currentRoles in currentUserRoles){
+          if(!userUpdateRoles.Roles.Contains(currentRoles)){
+            await _userManager.RemoveFromRoleAsync(user, currentRoles);
+          }
+        }
+        var updatedUserRoles = await _userManager.GetRolesAsync(user);
+
+        var userResponse = new UserPublicDTO {
+          UserId = user.Id,
+          UserName = user.UserName!,
+          Roles = updatedUserRoles.ToList()
+        };
+
+        return userResponse;
       }
 
       // ---- UPDATE PASSWORD ---- //
@@ -194,6 +211,7 @@ namespace JudgeAPI.Services.User
         var result = users.Select(u =>  new UserDTO
             {
             Id = u.Id,
+            UserName = u.UserName,
             FirstName = u.FirstName,
             LastName = u.LastName,
             IsActive = u.IsActive,

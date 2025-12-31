@@ -73,6 +73,7 @@ namespace JudgeAPI.Controllers
           return await _userService.GetUsersAsync();
         }
 
+        // DAR DE BAJA USUARIOS: EN FRONT YA ESTA ARMADO
         [HttpDelete("{id:guid}")]
         public IActionResult DeleteUser(int id)
         {
@@ -80,13 +81,7 @@ namespace JudgeAPI.Controllers
           return Ok();
         }
 
-        [HttpGet]
-        public IActionResult GetUsers()
-        {
-          // TODO: Pensar en este endpoint para obtener los mejores 10 de cada ejercicios o un ranking general basado en submissions
-          return Ok();
-        }
-        
+        // -- LISTADO DE ROLES --// 
         [HttpGet("roles")]
         public async Task<RolesResponseDTO> GetRoles()
         {
