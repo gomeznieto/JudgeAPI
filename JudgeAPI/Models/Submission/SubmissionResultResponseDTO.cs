@@ -11,5 +11,9 @@ namespace JudgeAPI.Models.Submission
         public string Language { get; set; } = Languages.Cpp;
         public bool isCorrect{ get; set; } = true;
         public int? ExecutionTimeMs { get; set; }
+        public bool IsExecuted {get; set;}
+        public bool IsTle { get; set; }
+        public int? ExitCode { get; set; }
+        public string? ErrorOutput { get; set; }
     }
 }

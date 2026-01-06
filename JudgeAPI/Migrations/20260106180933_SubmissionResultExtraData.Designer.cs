@@ -4,6 +4,7 @@ using JudgeAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JudgeAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260106180933_SubmissionResultExtraData")]
+    partial class SubmissionResultExtraData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,12 +161,6 @@ namespace JudgeAPI.Migrations
 
                     b.Property<string>("Code")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CompileError")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("CompileExitCode")
-                        .HasColumnType("int");
 
                     b.Property<string>("Language")
                         .IsRequired()

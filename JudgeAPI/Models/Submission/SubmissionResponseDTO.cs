@@ -11,6 +11,7 @@ namespace JudgeAPI.Models.Submission
     public DateTime SubmissionTime { get; set; }
     public string Language { get; set; } = Languages.Cpp;
     public string Code {get; set;} = String.Empty;
-
+    public string? CompileError { get; set; }
+    public int? CompileExitCode { get; set; }
   }
 }

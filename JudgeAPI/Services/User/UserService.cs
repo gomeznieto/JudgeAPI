@@ -182,7 +182,6 @@ namespace JudgeAPI.Services.User
       // ---- GET USERS ---- //
       public async Task<UsersResponseDTO> GetUsersAsync(int page = 1, int totalPerPage = 20)
       {
-        Console.WriteLine("[INFO PAGINACION] "  + page + " " + totalPerPage);
         var baseQuery = _userManager.Users
           .Select(u => new {
               Id = u.Id!,
@@ -206,7 +205,6 @@ namespace JudgeAPI.Services.User
             where usersId.Contains(ur.UserId)
             select new {ur.UserId, r.Name}
             ).ToListAsync();
-
 
         var result = users.Select(u =>  new UserDTO
             {

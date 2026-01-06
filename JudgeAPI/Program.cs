@@ -57,26 +57,33 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 // REDIS
 var redisConnection = builder.Configuration["Redis:Connection"];
-builder.Services.AddSingleton<IConnectionMultiplexer>(
-    sp => ConnectionMultiplexer.Connect(redisConnection)
-);
 
-// RUNNER MODE
-var mode = builder.Configuration["RunMode"] ?? "distributed";
-
-if (mode.Equals("local", StringComparison.OrdinalIgnoreCase))
-    builder.Services.AddScoped<IAnalyzer, LocalAnalyzer>();
-else
-    builder.Services.AddScoped<IAnalyzer, DistributedAnalyzer>();
-
-// SERVICIO QUE EJECUTA EL CPP EN LOCAL
-builder.Services.AddSingleton(new RunnerConfig()
+foreach (var kv in builder.Configuration.AsEnumerable())
 {
+  if (kv.Key.StartsWith("Redis"))
+    Console.WriteLine($"{kv.Key} = {kv.Value}");
+}
+
+  builder.Services.AddSingleton<IConnectionMultiplexer>(
+      sp => ConnectionMultiplexer.Connect(redisConnection)
+      );
+
+  // RUNNER MODE
+  var mode = builder.Configuration["RunMode"] ?? "distributed";
+
+  if (mode.Equals("local", StringComparison.OrdinalIgnoreCase))
+  builder.Services.AddScoped<IAnalyzer, LocalAnalyzer>();
+  else
+  builder.Services.AddScoped<IAnalyzer, DistributedAnalyzer>();
+
+  // SERVICIO QUE EJECUTA EL CPP EN LOCAL
+builder.Services.AddSingleton(new RunnerConfig()
+    {
     Cpus = 1,
     MemoryMb = 256,
     PerTestTimeoutSeconds = 2,
     ImageName = "judge-cpp-runner"
-});
+    });
 
 // SERVICES PROJECT
 builder.Services.AddTransient<ICurrentUserService, CurrentUserService>();
@@ -108,7 +115,6 @@ using (var scope = app.Services.CreateScope())
     {
       attempt++;
 
-      // Fuerza conexión real
       await db.Database.OpenConnectionAsync();
       await db.Database.CloseConnectionAsync();
 

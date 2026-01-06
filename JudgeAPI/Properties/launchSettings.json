@@ -5,8 +5,6 @@
       "launchBrowser": true,
       "environmentvariables": {
         "aspnetcore_environment": "development",
-        // "admin_mail": "admin@mail.com",
-        // "admin_password": "superfuerteysecreto123!"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5246"
