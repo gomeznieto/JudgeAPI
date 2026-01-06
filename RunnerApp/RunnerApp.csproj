@@ -2,6 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>RunnerApp</RootNamespace>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>dotnet-RunnerApp-ee122743-97b9-4ace-8b18-f6b7444294da</UserSecretsId>

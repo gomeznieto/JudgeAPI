@@ -34,8 +34,13 @@ services:
     volumes:
       - jobsdata:/app/jobs
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      HOST_JOBS_DIR: ${PWD}/jobs
+    env_file:
+      - .env
     depends_on:
       - redis
+      - db
     restart: unless-stopped
 
 volumes:

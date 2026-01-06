@@ -26,7 +26,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports: ["6378:6379"]
+    ports: ["6379:6379"]
     volumes:
       - redisdata:/data
 
@@ -35,10 +35,16 @@ services:
     build:
       context: .
       dockerfile: RunnerApp/Dockerfile
+    environment:
+      HOST_JOBS_DIR: ${PWD}/jobs
     volumes:
       - ./jobs:/app/jobs
       - /var/run/docker.sock:/var/run/docker.sock
-    depends_on: [redis]
+    env_file:
+      - .env.local
+    depends_on:
+      - redis
+      - db
 
   cpp-runner-image:
     build:
