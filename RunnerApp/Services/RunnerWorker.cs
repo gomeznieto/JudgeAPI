@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text;
 
 namespace JudgeAPI.Services.Execution
 {
@@ -17,6 +18,7 @@ namespace JudgeAPI.Services.Execution
     private readonly IDatabase _redis;
     private readonly RunnerConfig _cfg;
     private readonly IConfiguration _configuration;
+    private const int MaxCompileErrorLines = 20;
 
     public RunnerWorker(
         AppDbContext appDbContext,
@@ -138,11 +140,13 @@ namespace JudgeAPI.Services.Execution
       // Si el ćodigo no compila, retornamos
       if (compileRes.ExitCode != 0)
       {
-        submission.Verdict = SubmissionVerdicts.CompilationError;
-        submission.CompileError = compileRes.StdErr;
+        submission.Verdict = SubmissionVerdicts.CompilationError; 
+        var normalizedError = NormalizeStdErr(compileRes.StdErr); // Normalizamos el error para que saque los paths
+        submission.CompileError = TruncateError(normalizedError, MaxCompileErrorLines); // Si excede las 20 líneas, se queda con las más importantes
         submission.CompileExitCode = compileRes.ExitCode;
 
         await _appDbContext.SaveChangesAsync(stoppingToken);
+
         return;
       }
 
@@ -191,7 +195,7 @@ namespace JudgeAPI.Services.Execution
             ExitCode = runRes.ExitCode,
             ExecutionTimeMs = sw.ElapsedMilliseconds,
             });
-        
+
         // Determinamos el resultado del Test case
         if(isTle){
           Console.WriteLine($"[Runner] TLE en Submission {submission.Id}, TC {tc.Id}");
@@ -204,22 +208,22 @@ namespace JudgeAPI.Services.Execution
           hasRe = true;
         }
       }
-        
-        // Determinamos el resultado del veredicto general
-        if (hasTle){
-          submission.Verdict = SubmissionVerdicts.TimeLimitEsceeded;
-        } else if (hasRe){
-          submission.Verdict = SubmissionVerdicts.Wrong;
-        } else {
-          submission.Verdict = SubmissionVerdicts.Correct;
-        }
 
-        if (toInsert.Count > 0)
-          _appDbContext.SubmissionResults.AddRange(toInsert);
+      // Determinamos el resultado del veredicto general
+      if (hasTle){
+        submission.Verdict = SubmissionVerdicts.TimeLimitEsceeded;
+      } else if (hasRe){
+        submission.Verdict = SubmissionVerdicts.Wrong;
+      } else {
+        submission.Verdict = SubmissionVerdicts.Correct;
+      }
 
-        await _appDbContext.SaveChangesAsync(stoppingToken);
+      if (toInsert.Count > 0)
+        _appDbContext.SubmissionResults.AddRange(toInsert);
 
-        try { Directory.Delete(tempDir, true); } catch { /* ignore */ }
+      await _appDbContext.SaveChangesAsync(stoppingToken);
+
+      try { Directory.Delete(tempDir, true); } catch { /* ignore */ }
     }
 
     private static string Normalize(string s)
@@ -227,6 +231,71 @@ namespace JudgeAPI.Services.Execution
 
     private static string TrimForDb(string s, int max = 2000)
       => s.Length <= max ? s : s.Substring(0, max);
+
+    private static bool IsContinuationLine(string line){
+
+      bool hasCodeLineMarker = line.Contains("|", StringComparison.Ordinal);
+      bool hasErrorPointer = line.Contains("^", StringComparison.Ordinal);
+      bool hasErrorUnderline = line.Contains("~", StringComparison.Ordinal);
+
+      return hasCodeLineMarker || hasErrorPointer || hasErrorUnderline;
+    }
+
+    // Truncamos la cantidad de caracteres del StandardError
+    private static string TruncateError(string normalized, int maxLines = 20){
+
+      if (string.IsNullOrWhiteSpace(normalized))
+        return normalized;
+
+      var linesStdErr = normalized.Split('\n');
+      int index = 0;  
+
+      if(linesStdErr.Length > maxLines){
+        StringBuilder response = new StringBuilder();
+
+        while(index < linesStdErr.Length && (index < maxLines || IsContinuationLine(linesStdErr[index]))) {
+          response.AppendLine(linesStdErr[index]);
+          index++;
+        }
+
+        return response.ToString();
+      }
+
+      return normalized;
+    }
+
+    // Normalizamos el error para que no coloque la ruta del archivo que se compiló
+    private static string NormalizeStdErr(string stdErr)
+    {
+      if (string.IsNullOrWhiteSpace(stdErr))
+        return stdErr;
+
+      var lines = stdErr.Split('\n');
+      var sb = new StringBuilder();
+
+      foreach (var line in lines)
+      {
+        string normalizedLine = line;
+
+        int cppIndex = line.LastIndexOf(".cpp", StringComparison.OrdinalIgnoreCase);
+        if (cppIndex >= 0)
+        {
+          int slashIndex = Math.Max(
+              line.LastIndexOf('/', cppIndex),
+              line.LastIndexOf('\\', cppIndex)
+              );
+
+          if (slashIndex >= 0 && slashIndex + 1 < line.Length)
+          {
+            normalizedLine = line.Substring(slashIndex + 1);
+          }
+        }
+
+        sb.AppendLine(normalizedLine);
+      }
+
+      return sb.ToString();
+    }
 
     // Ejecutamos el código
     private async Task<ProcessResult> RunDockerAsync(string hostWorkDir, string innerCmd, bool captureStdErr, CancellationToken stoppingToken)
