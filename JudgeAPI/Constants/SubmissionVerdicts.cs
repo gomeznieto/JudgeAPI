@@ -7,6 +7,8 @@
         public const string Wrong = "Wrong";
         public const string CompilationError = "Compilation Error";
         public const string Queued = "Queued";
-        public const string TimeLimitEsceeded = "TimeLimit Exceeded";
+        public const string TimeLimitEsceeded = "Time Limit Exceeded";
+        public const string MemoryLimitEsceeded = "Memory Limit Exceeded";
+        public const string RuntimeError = "Runtime Error";
     }
 }

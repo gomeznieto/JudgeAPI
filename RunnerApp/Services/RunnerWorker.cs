@@ -152,8 +152,11 @@ namespace JudgeAPI.Services.Execution
 
       // Ejecutar test
       var toInsert = new List<SubmissionResult>();
+      var executionResults = new List<ExecutionResult>(); 
       bool hasTle = false;
       bool hasRe = false;
+      bool hasMle = false;
+      bool hasAllCorrect = true;
 
       foreach (var tc in testCases)
       {
@@ -169,17 +172,20 @@ namespace JudgeAPI.Services.Execution
         sw.Stop();
 
         var output = File.Exists(outPath) ? await File.ReadAllTextAsync(outPath, stoppingToken) : string.Empty;
-
+        
+        // Analizamos el código
         bool isTle = runRes.ExitCode == 124;
-        bool isRe = runRes.ExitCode != 0 && !isTle;
-
+        bool isMle = runRes.ExitCode == 137;
+        bool isRe = runRes.ExitCode != 0 && !isTle && !isMle;
         bool isCorrect = false;
 
-        if (!isTle && !isRe)
+        // Si todo transcurrió sin errores, verificamos que la respuesta sea correcta
+        if (!isTle && !isRe && !isMle)
         {
           isCorrect = Normalize(output) == Normalize(tc.ExpectedOutput ?? string.Empty);
         }
 
+        // Guardamos los resultados. Al menos un resultado por error o tiempo excedido se gurdaría como intento.
         toInsert.Add(new SubmissionResult
             {
             SubmissionId = submission.Id,
@@ -188,6 +194,8 @@ namespace JudgeAPI.Services.Execution
             IsExecuted = true,
             IsCorrect = isCorrect,
             IsTle = isTle, 
+            IsMle = isMle,
+            IsRe = isRe,
 
             Output = !isTle ? TrimForDb(output) : null, // Si se excede de tiempo, no hay salida
             ErrorOutput = isRe ? runRes.StdErr : null, 
@@ -195,27 +203,38 @@ namespace JudgeAPI.Services.Execution
             ExitCode = runRes.ExitCode,
             ExecutionTimeMs = sw.ElapsedMilliseconds,
             });
+        
 
         // Determinamos el resultado del Test case
         if(isTle){
-          Console.WriteLine($"[Runner] TLE en Submission {submission.Id}, TC {tc.Id}");
           hasTle = true;
           break;
         }
 
         if (isRe) {
-          Console.WriteLine($"[Runner] RE (exit {runRes.ExitCode}) en Submission {submission.Id}, TC {tc.Id}");
           hasRe = true;
+        }
+
+        if(isMle) {
+          hasMle = true;
+        }
+
+        if(!isCorrect){
+          hasAllCorrect = false;
         }
       }
 
       // Determinamos el resultado del veredicto general
       if (hasTle){
         submission.Verdict = SubmissionVerdicts.TimeLimitEsceeded;
+      } else if (hasMle){
+        submission.Verdict = SubmissionVerdicts.MemoryLimitEsceeded;
       } else if (hasRe){
-        submission.Verdict = SubmissionVerdicts.Wrong;
-      } else {
+        submission.Verdict = SubmissionVerdicts.RuntimeError;
+      } else if (hasAllCorrect) {
         submission.Verdict = SubmissionVerdicts.Correct;
+      } else {
+        submission.Verdict = SubmissionVerdicts.Wrong;
       }
 
       if (toInsert.Count > 0)
