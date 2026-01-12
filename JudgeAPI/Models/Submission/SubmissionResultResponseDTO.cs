@@ -13,6 +13,8 @@ namespace JudgeAPI.Models.Submission
         public int? ExecutionTimeMs { get; set; }
         public bool IsExecuted {get; set;}
         public bool IsTle { get; set; }
+        public bool IsMle { get; set; }
+        public bool IsRe { get; set; }
         public int? ExitCode { get; set; }
         public string? ErrorOutput { get; set; }
     }

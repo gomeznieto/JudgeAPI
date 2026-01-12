@@ -4,8 +4,6 @@ using JudgeAPI.Entities;
 using JudgeAPI.Excerptions;
 using JudgeAPI.Models.Submission;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
-using System.Security.Claims;
 
 namespace JudgeAPI.Services.Submissions
 {
@@ -29,44 +27,58 @@ namespace JudgeAPI.Services.Submissions
             _configuration = configuration;
         }
 
+        // --- CREATE SUBMISSION --- //
         public async Task<SubmissionResponseDTO> CreateSubmissionAsync(string userId, int problemId, SubmissionCreateDTO submissionCreateDTO)
         {
-            var submission = _mapper.Map<Submission>(submissionCreateDTO);
-            submission.UserId = userId;
-            submission.ProblemId = problemId;
+          // Verificamos el tiempo desde la última entrega
+          var lastSubmission = await _appDbContext.Submissions.Where(s => s.UserId == userId).OrderByDescending(s => s.SubmissionTime).FirstOrDefaultAsync();
+          var timeBetweenSubmissions = lastSubmission != null ? DateTime.UtcNow - lastSubmission.SubmissionTime : TimeSpan.Zero;
 
-            _appDbContext.Submissions.Add(submission);
-            await _appDbContext.SaveChangesAsync();
+          // TIempo de espera entre submissions: 1 minuto
+          var minTimeBetweenSubmissions = TimeSpan.FromMinutes(1);
 
-            return _mapper.Map<SubmissionResponseDTO>(submission);
+          // Si el tiempo de envío es menor al lapso a esperar, se envía mensaje para que intente de vuelta más tarde
+          if(timeBetweenSubmissions < minTimeBetweenSubmissions){
+            throw new SubmissionTooSoonException ($"Por favor, espere {minTimeBetweenSubmissions - timeBetweenSubmissions:hh\\:mm\\:ss} antes de envíar el código.");
+          }
+
+          var submission = _mapper.Map<Submission>(submissionCreateDTO);
+          submission.UserId = userId;
+          submission.ProblemId = problemId;
+
+          _appDbContext.Submissions.Add(submission);
+          await _appDbContext.SaveChangesAsync();
+
+          return _mapper.Map<SubmissionResponseDTO>(submission);
         }
 
+        // --- GET SUBMISSION BY ID --- //
         public async Task<SubmissionResponseWrapper> GetSubmissionAsync(int id)
         {
-            var result = await _appDbContext.Submissions
-                .Include(s => s.Results!)
-                    .ThenInclude(r => r.TestCase)
-                .FirstOrDefaultAsync(s => s.Id == id);
+          var result = await _appDbContext.Submissions
+            .Include(s => s.Results!)
+            .ThenInclude(r => r.TestCase)
+            .FirstOrDefaultAsync(s => s.Id == id);
 
-            if (result == null)
-                throw new ConflictException($"No existe el resultado con el ID {id}");
+          if (result == null)
+            throw new ConflictException($"No existe el resultado con el ID {id}");
 
-            var submissionWrapper = new SubmissionResponseWrapper()
-            {
-                Verdict = result.Verdict,
-            };
+          var submissionWrapper = new SubmissionResponseWrapper()
+          {
+            Verdict = result.Verdict,
+          };
 
-            if (submissionWrapper.IsPending)
-                submissionWrapper.Summary = _mapper.Map<SubmissionResponseDTO>(result);
-            else
-                submissionWrapper.Results = _mapper.Map<SubmissionResponseWithResultDTO>(result);
+          if (submissionWrapper.IsPending)
+            submissionWrapper.Summary = _mapper.Map<SubmissionResponseDTO>(result);
+          else
+            submissionWrapper.Results = _mapper.Map<SubmissionResponseWithResultDTO>(result);
 
-            return submissionWrapper;
+          return submissionWrapper;
         }
 
         public async Task<bool> AnalyzeSubmissionAsync(int id)
         {
-            return await _submissionAnalyzerService.AnalyzeAsync(id);
+          return await _submissionAnalyzerService.AnalyzeAsync(id);
         }
     }
 }
