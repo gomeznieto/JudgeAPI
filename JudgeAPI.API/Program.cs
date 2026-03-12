@@ -1,6 +1,5 @@
+using JudgeAPI.Infrastructure;
 using JudgeAPI.Configuration;
-using JudgeAPI.Data;
-using JudgeAPI.Entities;
 using JudgeAPI.Extensions;
 using JudgeAPI.Infrastructure.Seed;
 using JudgeAPI.Middleware;
@@ -9,7 +8,6 @@ using JudgeAPI.Services.Execution;
 using JudgeAPI.Services.Problem;
 using JudgeAPI.Services.Submissions;
 using JudgeAPI.Services.TestCase;
-using JudgeAPI.Services.Token;
 using JudgeAPI.Services.Unit;
 using JudgeAPI.Services.User;
 using Microsoft.AspNetCore.Identity;
@@ -36,10 +34,7 @@ builder.Services.AddControllers();
 builder.Services.AddCorsPolicy();
 
 // DB CONTEXT
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null))
-);
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // DB IDENTITY
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
@@ -95,7 +90,6 @@ builder.Services.AddTransient<ISubmissionService, SubmissionService>();
 builder.Services.AddTransient<ITestCaseService, TestCaseService>();
 builder.Services.AddTransient<ICodeCompilerService, GppCodeCompilerService>();
 builder.Services.AddTransient<ICodeExecutorService, BasicExecutorService>();
-builder.Services.AddScoped<ITokenService, TokenService>();
 
 // --------- APP --------- //
 var app = builder.Build();
