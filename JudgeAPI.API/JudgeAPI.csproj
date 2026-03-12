@@ -29,4 +29,9 @@
     <Folder Include="CppRunnerImage\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\JudgeAPI.Application\JudgeAPI.Application.csproj" />
+    <ProjectReference Include="..\JudgeAPI.Infrastructure\JudgeAPI.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
