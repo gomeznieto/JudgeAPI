@@ -1,7 +1,6 @@
-﻿using JudgeAPI.Models.User;
-using JudgeAPI.Services.User;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using JudgeAPI.Application.Features;
 
 namespace JudgeAPI.Controllers
 {

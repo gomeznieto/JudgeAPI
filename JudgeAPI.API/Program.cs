@@ -3,35 +3,25 @@ using JudgeAPI.Configuration;
 using JudgeAPI.Extensions;
 using JudgeAPI.Infrastructure.Seed;
 using JudgeAPI.Middleware;
-using JudgeAPI.Services.Auth;
-using JudgeAPI.Services.Execution;
-using JudgeAPI.Services.Problem;
-using JudgeAPI.Services.Submissions;
-using JudgeAPI.Services.TestCase;
-using JudgeAPI.Services.Unit;
-using JudgeAPI.Services.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using DotNetEnv;
 
-// -- ENV -- //
+using JudgeAPI.Application.Common;
+using JudgeAPI.Application.Features;
+using JudgeAPI.Infrastructure.Identity;
+
 Env.Load();
 
-// -- BUILDER -- //
 var builder = WebApplication.CreateBuilder(args);
 
-// --------- SERVICES --------- //
-
-// HEALTHCHECKER
 builder.Services.AddHealthChecks();
-
-// API
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
-
-// CORS
 builder.Services.AddCorsPolicy();
+builder.Services.AddDataProtection();
+builder.Services.AddHttpContextAccessor();
 
 // DB CONTEXT
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -40,9 +30,6 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
-
-builder.Services.AddDataProtection();
-builder.Services.AddHttpContextAccessor();
 
 // JWT
 builder.Services.AddJwtAuthentication(builder.Configuration);
@@ -53,32 +40,33 @@ builder.Services.AddAutoMapper(typeof(Program));
 // REDIS
 var redisConnection = builder.Configuration["Redis:Connection"];
 
-foreach (var kv in builder.Configuration.AsEnumerable())
-{
-  if (kv.Key.StartsWith("Redis"))
-    Console.WriteLine($"{kv.Key} = {kv.Value}");
+foreach (var kv in builder.Configuration.AsEnumerable()){
+    if (kv.Key.StartsWith("Redis")){
+        Console.WriteLine($"{kv.Key} = {kv.Value}");
+    }
 }
 
-  builder.Services.AddSingleton<IConnectionMultiplexer>(
-      sp => ConnectionMultiplexer.Connect(redisConnection)
-      );
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+        sp => ConnectionMultiplexer.Connect(redisConnection)
+        );
 
-  // RUNNER MODE
-  var mode = builder.Configuration["RunMode"] ?? "distributed";
+// RUNNER MODE
+var mode = builder.Configuration["RunMode"] ?? "distributed";
 
-  if (mode.Equals("local", StringComparison.OrdinalIgnoreCase))
-  builder.Services.AddScoped<IAnalyzer, LocalAnalyzer>();
-  else
-  builder.Services.AddScoped<IAnalyzer, DistributedAnalyzer>();
+if (mode.Equals("local", StringComparison.OrdinalIgnoreCase)){
+    builder.Services.AddScoped<IAnalyzer, LocalAnalyzer>();
+} else {
+    builder.Services.AddScoped<IAnalyzer, DistributedAnalyzer>();
+}
 
-  // SERVICIO QUE EJECUTA EL CPP EN LOCAL
+// SERVICIO QUE EJECUTA EL CPP EN LOCAL
 builder.Services.AddSingleton(new RunnerConfig()
-    {
-    Cpus = 1,
-    MemoryMb = 256,
-    PerTestTimeoutSeconds = 2,
-    ImageName = "judge-cpp-runner"
-    });
+        {
+        Cpus = 1,
+        MemoryMb = 256,
+        PerTestTimeoutSeconds = 2,
+        ImageName = "judge-cpp-runner"
+        });
 
 // SERVICES PROJECT
 builder.Services.AddTransient<ICurrentUserService, CurrentUserService>();
@@ -90,55 +78,56 @@ builder.Services.AddTransient<ISubmissionService, SubmissionService>();
 builder.Services.AddTransient<ITestCaseService, TestCaseService>();
 builder.Services.AddTransient<ICodeCompilerService, GppCodeCompilerService>();
 builder.Services.AddTransient<ICodeExecutorService, BasicExecutorService>();
-
+builder.Services.AddTransient<IIdentityService, IdentityService>();
+builder.Services.AddTransient<ISubmissionRepository, SubmissionRepository>();
 // --------- APP --------- //
 var app = builder.Build();
 
 // MIGRATE AL INICIAR SERVICIO
 using (var scope = app.Services.CreateScope())
 {
-  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-  const int maxRetries = 20;
-  const int delaySeconds = 5;
+    const int maxRetries = 20;
+    const int delaySeconds = 5;
 
-  var attempt = 0;
-  while (true)
-  {
-    try
+    var attempt = 0;
+    while (true)
     {
-      attempt++;
+        try
+        {
+            attempt++;
 
-      await db.Database.OpenConnectionAsync();
-      await db.Database.CloseConnectionAsync();
+            await db.Database.OpenConnectionAsync();
+            await db.Database.CloseConnectionAsync();
 
-      db.Database.Migrate();
-      break;
+            db.Database.Migrate();
+            break;
+        }
+        catch
+        {
+            if (attempt >= maxRetries)
+                throw;
+
+            Console.WriteLine(
+                    $"[Start] La DB no está lista. Retry {attempt}/{maxRetries} en {delaySeconds}s"
+                    );
+
+            await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+        }
     }
-    catch
-    {
-      if (attempt >= maxRetries)
-        throw;
-
-      Console.WriteLine(
-          $"[Start] La DB no está lista. Retry {attempt}/{maxRetries} en {delaySeconds}s"
-          );
-
-      await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
-    }
-  }
 }
 
 // INICIAMOS CARGA A LA DB
 using (var scope = app.Services.CreateScope())
 {
-  // ROLES
-  var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-  await RoleSeeder.SeedRoleAsync(roleManager);
+    // ROLES
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await RoleSeeder.SeedRoleAsync(roleManager);
 
-  // ADMIN
-  var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-  await UserSeeder.SeedAdminAsync(userManager);
+    // ADMIN
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    await UserSeeder.SeedAdminAsync(userManager);
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
