@@ -1,60 +1,50 @@
 ﻿namespace JudgeAPI.Application.Features;
+using JudgeAPI.Application.Common;
+using JudgeAPI.Domain;
 using AutoMapper;
-using JudgeAPI.API.Constants;
-using JudgeAPI.Data;
-using JudgeAPI.Entities;
-using JudgeAPI.Excerptions;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 
 public class UserService : IUserService
 {
-    // private readonly UserManager<ApplicationUser> _userManager;
-    // private readonly AppDbContext _dbContext;
-    private readonly ICurrentUserService _currentUserService;
     private readonly IMapper _mapper;
-    // private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IIdentityService _identityService;
+    private readonly ISubmissionRepository _submissionRepository;
+
     public UserService(
-            // UserManager<ApplicationUser> userManager,
-            // RoleManager<IdentityRole> roleManager,
-            // AppDbContext dbContext,
-            ICurrentUserService currentUserService,
+            ISubmissionRepository submissionRepository,
+            IIdentityService identityService,
             IMapper mapper
             )
     {
-        // _userManager = userManager;
-        // _dbContext = dbContext;
-        // _roleManager = roleManager;
-        _currentUserService = currentUserService;
-        _mapper = mapper;
-    }
+        _mapper = mapper; }
 
     // ---- GET BY ID ---- //
-    public async Task<UserBaseDTO> GetUserByIdAsync(string id)
+    public async Task<UserBaseDTO> GetUserByIdAsync(string id, string currentId)
     {
-        // -- Busca Usuario por Id 
-        var currentUser = await _currentUserService.GetUserByIdAsync(id);
+        // -- Busca Usuario que realiza la consulta por Id 
+        var currentUser = await _identityService.FindByIdAsync(currentId);
+        var searchUser = await _identityService.FindByIdAsync(id);
 
-        if (currentUser is null) throw new NotFoundException($"El usuario no encontrado");
+        if (currentUser is null || searchUser is null) throw new NotFoundException($"El usuario no encontrado");
 
-        var roles = await _currentUserService.GetUserRolesByIdAsync(currentUser);
+        // -- Roles del usuario que realiza la consulta
+        var currentUserRoles = await _identityService.GetRoleAsync(currentUser) ?? [];
 
-        // -- Usuario que realiza la consulta
-        var currentUserId = _currentUserService.GetCurrentUserId();
-        var currentUserRoles = _currentUserService.GetCurrentUserRole();
+        // -- Roles del usuario buscado
+        var searchUserRoles = await _identityService.GetRoleAsync(searchUser) ?? [];
+
         // --------------------------------
 
         // Si un usuario No admin busca el profile de un usuario admin
-        if (roles.Contains(Roles.Admin) && !currentUserRoles.Contains(Roles.Admin))
+        if (searchUserRoles.Contains(Roles.Admin) && !currentUserRoles.Contains(Roles.Admin))
             throw new ForbiddenException($"No tiene permisos para acceder a este profile");
 
         // Buscamos submission Result del usuario a buscar
-        var submissionUser = await _dbContext.Submissions.Where(x => x.UserId == id).ToListAsync();
+        var submissionUser = await _submissionRepository.GetAllByUserIdAsync(id);
         var submissionResponseDTO = _mapper.Map<List<SubmissionResponseDTO>>(submissionUser);
 
         // Si el usuario mira su propio profile
-        if (currentUser.Id == currentUserId)
+        if (currentUser.Id == id)
         {
             var privateUserResponse = _mapper.Map<UserPrivateDTO>(currentUser);
             privateUserResponse.Submissions = submissionResponseDTO;
@@ -64,7 +54,8 @@ public class UserService : IUserService
         // Si el usuario actual tiene permisos de admin
         if (currentUserRoles.Contains(Roles.Admin))
         {
-            if (currentUser.Id != currentUserId)
+            // Evitamos que otro Admin pueda ver el perfil
+            if(currentUser.Id != id)
                 throw new ForbiddenException("No tiene permisos para acceder a este profile");
 
             var adminUserResponse = _mapper.Map<UserAdminDTO>(currentUser);
@@ -79,54 +70,53 @@ public class UserService : IUserService
     }
 
     // -- RETORNAR USUARIO ACTUAL LOGEADO -- //
-    public async Task<UserPrivateDTO> GetCurrectUser()
+    public async Task<UserPrivateDTO> GetCurrectUser(string id)
     {
-        var currentUser = await _currentUserService.GetCurrentUserAsync(); 
-        var roles = _currentUserService.GetCurrentUserRole();            
-        var submissionList = _dbContext.Submissions.Where(s => s.UserId == currentUser.Id).ToList();
+        var currentUser = await _identityService.FindByIdAsync(id);
+        
+        if(currentUser is null) throw new KeyNotFoundException("El usuario que busca no existe");
+
+        var roles = await _identityService.GetRoleAsync(currentUser) ?? [];
+
+        var submissionList = await _submissionRepository.GetAllByUserIdAsync(id);
 
         // Armamos respuesta
         var userResponse = _mapper.Map<UserPrivateDTO>(currentUser);
 
         userResponse.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList); 
 
-        userResponse.UserId = currentUser.Id!;
+        userResponse.UserId = id;
         userResponse.Roles = roles.ToList();
 
         return userResponse; 
     }
 
     // ---- UPDATE ---- //
-    public async Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate)
+    public async Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate,  string currentId)
     {
-        // Traemos Id del usuario actual
-        var currentUserId = _currentUserService.GetCurrentUserId();
-
-        // Verificamos que los Id del actual y el usuario a actualizar sean los mismos
-        if (currentUserId != userUpdate.Id)
-            throw new ForbiddenException($"No tiene permiso para realizar modficiaciones en el usuario {userUpdate.Id}");
-
         // Traemos los datos completos almacenados del usuario 
-        var currentUser = await _currentUserService.GetCurrentUserAsync();
+        var currentIdentityUser = await _identityService.FindByIdAsync(currentId);
 
-        if (currentUser is null) throw new NotFoundException($"El usurio no encontrado");
+        if (currentIdentityUser is null)
+            throw new NotFoundException($"El usurio no encontrado");
 
         // Mapeamos los datos almacenados con los actuales.
-        _mapper.Map(userUpdate, currentUser);
+        _mapper.Map(userUpdate, currentIdentityUser);
 
         // Guardamos el usuario
-        _dbContext.Users.Update(_mapper.Map<ApplicationUser>(currentUser));
-        await _dbContext.SaveChangesAsync();
+        await _identityService.UpdateUserAsync(userUpdate, currentId);
+
 
         // Armamos la respuesta
-        var roles = _currentUserService.GetCurrentUserRole();
-        var submissionList = _dbContext.Submissions.Where(s => s.UserId == currentUser.Id).ToList();
+        var roles = await _identityService.GetRoleAsync(currentIdentityUser) ?? [];
 
-        var updatedUser =  _mapper.Map<UserPrivateDTO>(currentUser);
+        var submissionList = await _submissionRepository.GetAllByUserIdAsync(currentId); 
+
+        var updatedUser =  _mapper.Map<UserPrivateDTO>(currentIdentityUser);
 
         updatedUser.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList); 
 
-        updatedUser.UserId = currentUser.Id!;
+        updatedUser.UserId = currentIdentityUser.Id!;
         updatedUser.Roles = roles.ToList();
 
         return updatedUser;
@@ -135,47 +125,42 @@ public class UserService : IUserService
 
     // ---- UPDATE ROLES ---- //
     public async Task<UserPublicDTO> UpdateUserRoles(UserUpdateRolesDTO userUpdateRoles){
-        var user = await _userManager.FindByIdAsync(userUpdateRoles.Id);
+        var user = await _identityService.FindByIdAsync(userUpdateRoles.Id);
 
         if(user == null) throw new NotFoundException("Usuario no encontrado");
 
-        var currentUserRoles = await _userManager.GetRolesAsync(user);
+        var currentUserRoles = await _identityService.GetRoleAsync(user) ?? [];
 
         // Agregamos roles nuevos
         foreach(var rol in userUpdateRoles.Roles.Distinct()){
-            if(!await _roleManager.RoleExistsAsync(rol)) throw new NotFoundException($"Rol inválido: {rol}");
-
-            if(!await _userManager.IsInRoleAsync(user, rol)) await _userManager.AddToRoleAsync(user, rol);
+            if(!await _identityService.RoleExistsAsync(rol)) throw new NotFoundException($"Rol inválido: {rol}");
+            if(!await _identityService.IsInRolAsync(user, rol)) await _identityService.AddRoleAsync(user, rol);
         }
 
         // Eliminamos los roles que no están
         foreach(var currentRoles in currentUserRoles){
             if(!userUpdateRoles.Roles.Contains(currentRoles)){
-                await _userManager.RemoveFromRoleAsync(user, currentRoles);
+                await _identityService.RemoveFromRoleAsync(user, currentRoles);
             }
         }
-        var updatedUserRoles = await _userManager.GetRolesAsync(user);
+        var updatedUserRoles = await _identityService.GetRoleAsync(user);
 
         var userResponse = new UserPublicDTO {
             UserId = user.Id,
             UserName = user.UserName!,
-            Roles = updatedUserRoles.ToList()
+            Roles = updatedUserRoles!.ToList() ?? []
         };
 
         return userResponse;
     }
 
     // ---- UPDATE PASSWORD ---- //
-    public async Task<IdentityResult> ChangePasswordAsync(ChangePasswordDTO changePasswordDTO)
+    public async Task<UserDTO> ChangePasswordAsync(ChangePasswordDTO dto, string userId)
     {
-        // Obtenemos el usuario del token
-        var user = await _currentUserService.GetCurrentUserAsync();
-
-        if (user is null) return IdentityResult.Failed(new IdentityError {Description = "Usuario no encontrado" });
-
-        var userApplication = _mapper.Map<ApplicationUser>(user);
-
-        return await _userManager.ChangePasswordAsync(userApplication, changePasswordDTO.OldPassword, changePasswordDTO.NewPassword);
+        var user = await _identityService.FindByIdAsync(userId);
+        if (user is null) throw new KeyNotFoundException ("El usuario que está bsucando no existe");
+        await _identityService.ChangePasswordAsync(user.Id, dto);
+        return user;
     }
 
     // ---- GET USERS ---- //
@@ -231,10 +216,10 @@ public class UserService : IUserService
 
     // ---- GET ROLES ---- //
     public async Task <RolesResponseDTO> GetRolesAsync(){
-        var roles = await _roleManager.Roles.Select( r => new RoleDTO{ Name = r.Name!}).ToListAsync();
+        var roles = await _identityService.GetAllRolesAsync();
 
         return new RolesResponseDTO{
-            Roles = roles
+            Roles = roles.Select(r => new RoleDTO{ Name = r}).ToList()
         };
     }
 }

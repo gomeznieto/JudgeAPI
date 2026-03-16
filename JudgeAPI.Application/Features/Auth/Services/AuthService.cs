@@ -7,21 +7,18 @@ using AutoMapper;
 public class AuthService : IAuthService
 {
     private readonly IMapper _mapper;
-    private readonly ICurrentUserService _currentUserService;
     private readonly ITokenService _tokenService;
     private readonly IIdentityService _identityService;
     private readonly ISubmissionRepository _submissionRepository;
 
     public AuthService(
             IMapper mapper,
-            ICurrentUserService currentUserService,
             ITokenService tokenService,
             IIdentityService identityService,
             ISubmissionRepository submissionRepository
             )
     {
         _mapper = mapper;
-        _currentUserService = currentUserService;
         _tokenService = tokenService;
         _identityService = identityService;
         _submissionRepository = submissionRepository;

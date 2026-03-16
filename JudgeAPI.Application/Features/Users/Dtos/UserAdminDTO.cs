@@ -1,14 +1,11 @@
-﻿using JudgeAPI.Models.Submission;
+﻿namespace JudgeAPI.Application.Features;
 
-namespace JudgeAPI.Models.User
-{
-    public class UserAdminDTO : UserBaseDTO
-    {
-        public required string UserName { get; set; }
-        public string Id { get; set; } = string.Empty;
-        public string? Email { get; set; }
-        public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public List<SubmissionResponseDTO> Submissons { get; set; } = new List<SubmissionResponseDTO>();
-    }
+public class UserAdminDTO : UserBaseDTO {
+    public required string UserName { get; set; }
+    public string Id { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public List<SubmissionResponseDTO> Submissons { get; set; } = new List<SubmissionResponseDTO>();
 }
+

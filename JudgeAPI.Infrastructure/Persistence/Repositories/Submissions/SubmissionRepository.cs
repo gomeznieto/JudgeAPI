@@ -32,7 +32,7 @@ public class SubmissionRepository : ISubmissionRepository
 
     public async Task<List<Submission>> GetAllByUserIdAsync(string id, CancellationToken cancellationToken)
     {
-        return await _dbContext.Submissions.Where(s => s.UserId == id).ToListAsync();
+        return await _dbContext.Submissions.Where(s => s.UserId == id).OrderByDescending(s => s.SubmissionTime).ToListAsync();
     }
 
     public async Task<Submission?> GetByIdAsync(int id, CancellationToken cancellationToken = default)

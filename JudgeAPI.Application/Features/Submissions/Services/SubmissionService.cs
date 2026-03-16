@@ -1,43 +1,38 @@
 ﻿using AutoMapper;
-using JudgeAPI.Data;
-using JudgeAPI.Entities;
-using JudgeAPI.Excerptions;
-using JudgeAPI.Models.Submission;
-using Microsoft.EntityFrameworkCore;
+using JudgeAPI.Domain;
+using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Application.Common;
+using JudgeAPI.Application.Features;
 
 namespace JudgeAPI.Services.Submissions
 {
     public class SubmissionService : ISubmissionService
     {
-        private readonly AppDbContext _appDbContext;
         private readonly IMapper _mapper;
         private readonly IAnalyzer _submissionAnalyzerService;
-        private readonly IConfiguration _configuration;
+        private readonly ISubmissionRepository _submissionRespository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public SubmissionService(
-            AppDbContext appDbContext,
             IMapper mapper,
             IAnalyzer submissionAnalyzerService,
-            IConfiguration configuration
+            ISubmissionRepository submissionRepository,
+            IUnitOfWork unitOfWork
         )
         {
-            _appDbContext = appDbContext;
             _mapper = mapper;
             _submissionAnalyzerService = submissionAnalyzerService;
-            _configuration = configuration;
+            _submissionRespository = submissionRepository;
+            _unitOfWork = unitOfWork;
         }
 
         // --- CREATE SUBMISSION --- //
         public async Task<SubmissionResponseDTO> CreateSubmissionAsync(string userId, int problemId, SubmissionCreateDTO submissionCreateDTO)
         {
-          // Verificamos el tiempo desde la última entrega
-          var lastSubmission = await _appDbContext.Submissions.Where(s => s.UserId == userId).OrderByDescending(s => s.SubmissionTime).FirstOrDefaultAsync();
-          var timeBetweenSubmissions = lastSubmission != null ? DateTime.UtcNow - lastSubmission.SubmissionTime : TimeSpan.Zero;
-
-          // TIempo de espera entre submissions: 1 minuto
+          var lastSubmission = await _submissionRespository.GetAllByUserIdAsync(userId);
+          var timeBetweenSubmissions = lastSubmission[0] != null ? DateTime.UtcNow - lastSubmission[0].SubmissionTime : TimeSpan.Zero;
           var minTimeBetweenSubmissions = TimeSpan.FromMinutes(1);
 
-          // Si el tiempo de envío es menor al lapso a esperar, se envía mensaje para que intente de vuelta más tarde
           if(timeBetweenSubmissions < minTimeBetweenSubmissions){
             throw new SubmissionTooSoonException ($"Por favor, espere {minTimeBetweenSubmissions - timeBetweenSubmissions:hh\\:mm\\:ss} antes de envíar el código.");
           }
@@ -46,13 +41,13 @@ namespace JudgeAPI.Services.Submissions
           submission.UserId = userId;
           submission.ProblemId = problemId;
 
-          _appDbContext.Submissions.Add(submission);
-          await _appDbContext.SaveChangesAsync();
+          _submissionRespository.Add(submission);
+          await _unitOfWork.SaveChangesAsync();
 
           return _mapper.Map<SubmissionResponseDTO>(submission);
         }
 
-        // --- GET SUBMISSION BY ID --- //
+        // --- GET SUBMISSION BY ID --- // // TODO: SEGUIR DESDE ACA
         public async Task<SubmissionResponseWrapper> GetSubmissionAsync(int id)
         {
           var result = await _appDbContext.Submissions
