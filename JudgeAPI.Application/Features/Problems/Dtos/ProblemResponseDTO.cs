@@ -1,4 +1,4 @@
-﻿namespace JudgeAPI.Models.Problem
+﻿namespace JudgeAPI.Application.Features
 {
     public class ProblemResponseDTO
     {
@@ -12,7 +12,7 @@
         public string? MaxConstraint { get; set; }
         public string? ExampleInput { get; set; }
         public string? ExampleOutput { get; set; }
-        public bool isMandatory { get; set; } = false;
-        public bool isActivate { get; set; }
+        public bool IsMandatory { get; set; } = false;
+        public bool IsActivate { get; set; }
     }
 }

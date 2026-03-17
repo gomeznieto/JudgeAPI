@@ -7,6 +7,7 @@ namespace JudgeAPI.Services.Unit
         Task<UnitResponseDTO> CreateAsync(UnitCreateDTO dto);
         Task<List<UnitResponseDTO>> GetAllAsync();
         Task<UnitResponseDTO> GetByIdAsync(int id);
+        Task<UnitWithProblemsDTO> GetUnitWithProblemsAsync(int unitId);
         Task<UnitResponseDTO> UpdateAsync(UnitUpdateDTO dto);
     }
 }

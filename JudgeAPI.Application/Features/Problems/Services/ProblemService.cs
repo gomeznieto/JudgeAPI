@@ -1,85 +1,66 @@
 ﻿using AutoMapper;
-using JudgeAPI.Data;
-using JudgeAPI.Entities;
-using JudgeAPI.Models.Problem;
-using JudgeAPI.Models.Unit;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
+using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Domain;
 
-namespace JudgeAPI.Services.Problem
+namespace JudgeAPI.Application.Features
 {
-    public class ProblemService : IProblemService
+    public class ProblemService(IMapper mapper,
+                                IProblemRepository problemRepository,
+                                IUnitOfWork unitOfWork) : IProblemService
     {
-        private readonly AppDbContext _appDbContext;
-        private readonly IMapper _mapper;
+        private readonly IMapper _mapper = mapper;
+        private readonly IProblemRepository _problemRepository = problemRepository;
 
-        public ProblemService(
-            AppDbContext appDbContext,
-            IMapper mapper
-            )
-        {
-            _appDbContext = appDbContext;
-            _mapper = mapper;
-        }
-
-        public async Task<UnitWithProblemsDTO> GetUnitWithProblemsAsync(int unitId)
-        {
-            var unit = await _appDbContext.Units
-                .Include(u => u.Problems)
-                .SingleOrDefaultAsync(u => u.Id == unitId);
-
-            if (unit == null)
-                throw new KeyNotFoundException($"No se encontró la unidad con ID {unitId}");
-
-            return _mapper.Map<UnitWithProblemsDTO>(unit);
-        }
-
+        // CREATE
         public async Task<ProblemResponseDTO> CreateAsync(ProblemCreateDTO dto)
         {
-            var problem = _mapper.Map<Entities.Problem>(dto);
+            Problem problem = _mapper.Map<Problem>(dto);
 
-            _appDbContext.Add(problem);
-            await _appDbContext.SaveChangesAsync();
-            var mapping = _mapper.Map<ProblemResponseDTO>(problem);
+            _problemRepository.Add(problem); 
+            _ = await unitOfWork.SaveChangesAsync();
+            ProblemResponseDTO mapping = _mapper.Map<ProblemResponseDTO>(problem);
+
             return mapping;
         }
 
         public async Task<ProblemResponseDTO> GetById(int id)
         {
-            var problem = await _appDbContext.Problems.FindAsync(id);
+            Problem? problem = await _problemRepository.GetByIdAsync(id);
 
-            if (problem is null)
-                throw new KeyNotFoundException($"No se encontró el problema con ID {id}");
-
-            return _mapper.Map<ProblemResponseDTO>(problem);
+            return problem is null
+                ? throw new KeyNotFoundException($"No se encontró el problema con ID {id}")
+                : _mapper.Map<ProblemResponseDTO>(problem);
         }
 
         public async Task<ProblemResponseDTO> UpdateAsync(ProblemUpdateDTO dto)
         {
-            var problem = await _appDbContext.Problems.FindAsync(dto.Id);
+            Problem? problem = await _problemRepository.GetByIdAsync(dto.Id);
 
-            if (problem is null)
-                throw new KeyNotFoundException($"No se encontró el problema con ID {dto.Id}");
+            if (problem is not null)
+            {
+                _ = _mapper.Map(dto, problem);
 
-            _mapper.Map(dto, problem);
+               _ = await unitOfWork.SaveChangesAsync();
 
-            await _appDbContext.SaveChangesAsync();
+                return _mapper.Map<ProblemResponseDTO>(problem);
+            }
 
-            return _mapper.Map<ProblemResponseDTO>(problem);
-
+            throw new KeyNotFoundException($"No se encontró el problema con ID {dto.Id}");
         }
 
         public async Task DeleteProblemAsync(int id)
         {
-            var exist = await _appDbContext.Problems.AnyAsync(x => x.Id == id);
+            Problem? problem = await _problemRepository.GetByIdAsync(id);
 
-            if(!exist)
+            if (problem is not null)
+            {
+                _problemRepository.Delete(problem);
+                _ = await unitOfWork.SaveChangesAsync();
+            }
+            else
+            {
                 throw new KeyNotFoundException($"No se encontró el problema con ID {id}");
-
-            var affectedRows = await _appDbContext.Problems.Where(x => x.Id == id).ExecuteDeleteAsync();
-
-            if(affectedRows == 0)
-                throw new InvalidOperationException($"No se pudo eliminar el problema con ID {id}.");
+            }
         }
     }
 }

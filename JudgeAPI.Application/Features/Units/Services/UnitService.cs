@@ -6,19 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JudgeAPI.Services.Unit
 {
-    public class UnitService : IUnitService
+    public class UnitService(IMapper mapper) : IUnitService
     {
-        private readonly AppDbContext _appDbContext;
-        private readonly IMapper _mapper;
-
-        public UnitService(
-            AppDbContext appDbContext,
-            IMapper mapper
-        )
-        {
-            _appDbContext = appDbContext;
-            _mapper = mapper;
-        }
+        private readonly IMapper _mapper = mapper;
 
         // GET
         public async Task<List<UnitResponseDTO>> GetAllAsync()
@@ -38,6 +28,19 @@ namespace JudgeAPI.Services.Unit
                 throw new KeyNotFoundException($"No se encontró la unidad con ID {id}");
 
             return _mapper.Map<UnitResponseDTO>(unit);
+        }
+        
+        // GET BY ID WITH PROBLEMS
+        public async Task<UnitWithProblemsDTO> GetUnitWithProblemsAsync(int unitId)
+        {
+            var unit = await _appDbContext.Units
+                .Include(u => u.Problems)
+                .SingleOrDefaultAsync(u => u.Id == unitId);
+
+            if (unit == null)
+                throw new KeyNotFoundException($"No se encontró la unidad con ID {unitId}");
+
+            return _mapper.Map<UnitWithProblemsDTO>(unit);
         }
 
         // CREATE

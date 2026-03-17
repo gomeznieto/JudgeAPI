@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace JudgeAPI.Models.Problem
+namespace JudgeAPI.Application.Features
 {
     public class ProblemUpdateDTO
     {
@@ -15,7 +15,7 @@ namespace JudgeAPI.Models.Problem
         public string? MaxConstraint { get; set; }
         public string? ExampleInput { get; set; }
         public string? ExampleOutput { get; set; }
-        public bool isActivate { get; set; }
-        public bool isMandatory { get; set; }
+        public bool IsActivate { get; set; }
+        public bool IsMandatory { get; set; }
     }
 }

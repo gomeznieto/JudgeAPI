@@ -12,5 +12,6 @@ public class SubmissionResponseDTO
     public string Code {get; set;} = String.Empty;
     public string? CompileError { get; set; }
     public int? CompileExitCode { get; set; }
+    public List<SubmissionResultResponseDTO> Results { get; set; } = [];
 }
 

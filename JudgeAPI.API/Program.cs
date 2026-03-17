@@ -11,6 +11,9 @@ using DotNetEnv;
 using JudgeAPI.Application.Common;
 using JudgeAPI.Application.Features;
 using JudgeAPI.Infrastructure.Identity;
+using JudgeAPI.Application.Features.Submissions.Interfaces;
+using JudgeAPI.Infrastructure.Persistence.Repositories.Submissions;
+using JudgeAPI.Infrastructure.Persistence.Repositories.Problems;
 
 Env.Load();
 
@@ -80,6 +83,7 @@ builder.Services.AddTransient<ICodeCompilerService, GppCodeCompilerService>();
 builder.Services.AddTransient<ICodeExecutorService, BasicExecutorService>();
 builder.Services.AddTransient<IIdentityService, IdentityService>();
 builder.Services.AddTransient<ISubmissionRepository, SubmissionRepository>();
+builder.Services.AddTransient<IProblemRepository, ProblemRepository>();
 // --------- APP --------- //
 var app = builder.Build();
 

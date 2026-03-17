@@ -29,8 +29,8 @@ namespace JudgeAPI.Services.Submissions
         // --- CREATE SUBMISSION --- //
         public async Task<SubmissionResponseDTO> CreateSubmissionAsync(string userId, int problemId, SubmissionCreateDTO submissionCreateDTO)
         {
-          var lastSubmission = await _submissionRespository.GetAllByUserIdAsync(userId);
-          var timeBetweenSubmissions = lastSubmission[0] != null ? DateTime.UtcNow - lastSubmission[0].SubmissionTime : TimeSpan.Zero;
+          var lastSubmission = await _submissionRespository.GetLastSubmissionAsync(userId);
+          var timeBetweenSubmissions = lastSubmission != null ? DateTime.UtcNow - lastSubmission.SubmissionTime : TimeSpan.Zero;
           var minTimeBetweenSubmissions = TimeSpan.FromMinutes(1);
 
           if(timeBetweenSubmissions < minTimeBetweenSubmissions){
@@ -47,33 +47,23 @@ namespace JudgeAPI.Services.Submissions
           return _mapper.Map<SubmissionResponseDTO>(submission);
         }
 
-        // --- GET SUBMISSION BY ID --- // // TODO: SEGUIR DESDE ACA
-        public async Task<SubmissionResponseWrapper> GetSubmissionAsync(int id)
+        // --- GET SUBMISSION BY ID --- //
+        public async Task<SubmissionResponseDTO> GetSubmissionAsync(int submissionId)
         {
-          var result = await _appDbContext.Submissions
-            .Include(s => s.Results!)
-            .ThenInclude(r => r.TestCase)
-            .FirstOrDefaultAsync(s => s.Id == id);
+            var result = await _submissionRespository.GetSubmissionByIdAsync(submissionId); 
 
-          if (result == null)
-            throw new ConflictException($"No existe el resultado con el ID {id}");
+            if (result == null)
+                throw new KeyNotFoundException($"No existe el resultado con el ID {submissionId}");
 
-          var submissionWrapper = new SubmissionResponseWrapper()
-          {
-            Verdict = result.Verdict,
-          };
+            var submissionResponse = _mapper.Map<SubmissionResponseDTO>(result);
+            submissionResponse.Verdict = result.Verdict;
 
-          if (submissionWrapper.IsPending)
-            submissionWrapper.Summary = _mapper.Map<SubmissionResponseDTO>(result);
-          else
-            submissionWrapper.Results = _mapper.Map<SubmissionResponseWithResultDTO>(result);
-
-          return submissionWrapper;
+            return submissionResponse;
         }
 
         public async Task<bool> AnalyzeSubmissionAsync(int id)
         {
-          return await _submissionAnalyzerService.AnalyzeAsync(id);
+            return await _submissionAnalyzerService.AnalyzeAsync(id);
         }
     }
 }
