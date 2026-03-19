@@ -1,5 +1,9 @@
-﻿namespace JudgeAPI.Application.Features;
+﻿using JudgeAPI.Application.Features.Users.Dtos;
 
-public class TokenResponseDTO : UserPrivateDTO
+
+namespace JudgeAPI.Application.Features.Auth.Dtos
 {
+    public class TokenResponseDTO : UserPrivateDTO
+    {
+    }
 }

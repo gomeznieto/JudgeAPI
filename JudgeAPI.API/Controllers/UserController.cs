@@ -1,11 +1,10 @@
-﻿namespace JudgeAPI.API.Controllers;
-
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using JudgeAPI.Application.Features;
 using System.Security.Claims;
+using JudgeAPI.Application.Features.Users.Dtos;
 
-
+namespace JudgeAPI.API.Controllers;
 [ApiController]
 [Route("api/users")]
 [Authorize]

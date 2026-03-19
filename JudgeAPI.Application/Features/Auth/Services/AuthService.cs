@@ -1,111 +1,111 @@
-﻿namespace JudgeAPI.Application.Features;
-using JudgeAPI.Domain;
+﻿using JudgeAPI.Domain;
 using JudgeAPI.Application.Common;
+using JudgeAPI.Application.Features.Submissions.Interfaces;
 
 using AutoMapper;
+using JudgeAPI.Application.Features.Submissions.Dtos;
+using JudgeAPI.Application.Features.Auth.Dtos;
+using JudgeAPI.Application.Features.Auth.Iterfaces;
+using JudgeAPI.Application.Common.Interfaces;
 
-public class AuthService : IAuthService
+namespace JudgeAPI.Application.Features.Auth.Services
 {
-    private readonly IMapper _mapper;
-    private readonly ITokenService _tokenService;
-    private readonly IIdentityService _identityService;
-    private readonly ISubmissionRepository _submissionRepository;
-
-    public AuthService(
+    public class AuthService(
             IMapper mapper,
             ITokenService tokenService,
             IIdentityService identityService,
             ISubmissionRepository submissionRepository
-            )
+                ) : IAuthService
     {
-        _mapper = mapper;
-        _tokenService = tokenService;
-        _identityService = identityService;
-        _submissionRepository = submissionRepository;
-    }
+        private readonly IMapper _mapper = mapper;
+        private readonly ITokenService _tokenService = tokenService;
+        private readonly IIdentityService _identityService = identityService;
+        private readonly ISubmissionRepository _submissionRepository = submissionRepository;
 
-    /*
-       POST /logout
-       POST /refresh-token (si usás JWT con refresh tokens)
-       POST /confirm-email
-       POST /forgot-password
-       POST /reset-password
-*/
+        /*
+           POST /logout
+           POST /refresh-token (si usás JWT con refresh tokens)
+           POST /confirm-email
+           POST /forgot-password
+           POST /reset-password
+    */
 
-    // ---- REGISTER ---- //
-    public async Task<TokenResponseDTO> RegisterAsync(UserCreateDTO dto)
-    {
-        var userExist = await _identityService.FindByNameAsync(dto.Username);
+        // ---- REGISTER ---- //
+        public async Task<TokenResponseDTO> RegisterAsync(UserCreateDTO dto)
+        {
+            _ = await _identityService.FindByNameAsync(dto.Username) ?? throw new ConflictException("El nombre del usuario ya está en uso.");
 
-        if (userExist is not null)
-            throw new ConflictException("El nombre del usuario ya está en uso.");
-        
-        var newUser = new UserDTO {
-            UserName = dto.Username,
-            Email = dto.Username,
-           FirstName = dto.FirstName,
-           LastName = dto.LastName,
-           University = dto.Universidad,
-           IsActive = true
-        };
+            UserDTO newUser = new()
+            {
+                UserName = dto.Username,
+                Email = dto.Username,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                University = dto.Universidad,
+                IsActive = true
+            };
 
-        var result = await _identityService.CreateUserAsync(newUser, dto.Password);
+            IdentityResultDTO result = await _identityService.CreateUserAsync(newUser, dto.Password);
 
-        if (!result.Succeeded){
-            var errors = string.Join(" | ", result.Errors!);
-            throw new Exception($"Error al crear el usuario: {errors}");
+            if (!result.Succeeded)
+            {
+                string errors = string.Join(" | ", result.Errors!);
+                throw new Exception($"Error al crear el usuario: {errors}");
+            }
+
+            // Roles. Si no existe lo creamos la primera vez.
+            bool roleExists = await _identityService.RoleExistsAsync(Roles.Student);
+
+            if (!roleExists)
+            {
+                _ = await _identityService.CreateRoleAsync(Roles.Student);
+            }
+
+            await _identityService.AddRoleAsync(newUser, Roles.Student);
+
+            // Obtenemos Roles y token para colocar en la respuesta
+            IList<string> roles = await _identityService.GetRoleAsync(newUser) ?? [];
+
+            string token = _tokenService.GenerateToken(newUser.Id, newUser.Email, roles!);
+
+            return new TokenResponseDTO
+            {
+                Token = token,
+                UserId = newUser.Id!,
+                UserName = newUser.UserName ?? "",
+                FirstName = newUser.FirstName,
+                LastName = newUser.LastName,
+                Email = newUser.Email,
+                Roles = [.. roles]
+            };
         }
 
-        // Roles. Si no existe lo creamos la primera vez.
-        var roleExists = await _identityService.RoleExistsAsync(Roles.Student);
-
-        if (!roleExists)
-            await _identityService.CreateRoleAsync(Roles.Student);
-
-        await _identityService.AddRoleAsync(newUser, Roles.Student);
-
-        // Obtenemos Roles y token para colocar en la respuesta
-        var roles = await _identityService.GetRoleAsync(newUser);
-        var token = _tokenService.GenerateToken(newUser.Id, newUser.Email, roles!);
-
-        return new TokenResponseDTO
+        // ---- LOGIN ---- //
+        public async Task<TokenResponseDTO> LoginAsync(LoginRequestDTO request)
         {
-            Token = token,
-            UserId = newUser.Id!,
-            UserName = newUser.UserName ?? "",
-            FirstName = newUser.FirstName,
-            LastName = newUser.LastName,
-            Email = newUser.Email,
-            Roles = roles!.ToList()
-        };
+            UserDTO? user = await _identityService.FindByNameAsync(request.UserName) ?? throw new ConflictException("Usuario o contraseña incorrectos");
+
+            bool passwordValid = await _identityService.CheckPasswordAsync(user.Email, request.Password);
+
+            if (!passwordValid)
+            {
+                throw new ConflictException("Usuario o contraseña incorrectos");
+            }
+
+            // Roles y token para armar la  respuestas
+            IList<string> roles = await _identityService.GetRoleAsync(user) ?? [];
+            string token = _tokenService.GenerateToken(user.Id, user.Email, roles);
+
+            List<Submission> submissionList = await _submissionRepository.GetAllByUserIdAsync(user.Id);
+
+            TokenResponseDTO tokenResponse = _mapper.Map<TokenResponseDTO>(user);
+            tokenResponse.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList);
+            tokenResponse.Token = token;
+            tokenResponse.UserId = user.Id;
+            tokenResponse.Roles = [.. roles];
+
+            return tokenResponse;
+        }
     }
 
-    // ---- LOGIN ---- //
-    public async Task<TokenResponseDTO> LoginAsync(LoginRequestDTO request)
-    {
-        var user = await _identityService.FindByNameAsync(request.UserName);
-
-        if (user is null)
-            throw new ConflictException("Usuario o contraseña incorrectos");
-
-        var passwordValid = await _identityService.CheckPasswordAsync(user.Email, request.Password);
-
-        if (!passwordValid)
-            throw new ConflictException("Usuario o contraseña incorrectos");
-
-        // Roles y token para armar la  respuestas
-        var roles = await _identityService.GetRoleAsync(user);
-        var token = _tokenService.GenerateToken(user.Id, user.Email, roles!);
-
-        var submissionList = await _submissionRepository.GetAllByUserIdAsync(user.Id);
-
-        var tokenResponse = _mapper.Map<TokenResponseDTO>(user);
-        tokenResponse.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList);
-        tokenResponse.Token = token;
-        tokenResponse.UserId = user.Id!;
-        tokenResponse.Roles = roles!.ToList();
-
-        return tokenResponse;
-    }
 }
-

@@ -1,4 +1,6 @@
 ﻿using JudgeAPI.Application.Features;
+using JudgeAPI.Application.Features.Auth.Dtos;
+using JudgeAPI.Application.Features.Auth.Iterfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JudgeAPI.API.Controllers;

@@ -7,13 +7,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using DotNetEnv;
-
-using JudgeAPI.Application.Common;
 using JudgeAPI.Application.Features;
 using JudgeAPI.Infrastructure.Identity;
 using JudgeAPI.Application.Features.Submissions.Interfaces;
 using JudgeAPI.Infrastructure.Persistence.Repositories.Submissions;
 using JudgeAPI.Infrastructure.Persistence.Repositories.Problems;
+using JudgeAPI.Application.Features.Auth.Services;
+using JudgeAPI.Application.Features.Users.Services;
+using JudgeAPI.Application.Features.Users.Interfaces;
+using JudgeAPI.Application.Features.Auth.Iterfaces;
+using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Infrastructure.Persistence.Repositories.Users;
 
 Env.Load();
 
@@ -84,6 +88,8 @@ builder.Services.AddTransient<ICodeExecutorService, BasicExecutorService>();
 builder.Services.AddTransient<IIdentityService, IdentityService>();
 builder.Services.AddTransient<ISubmissionRepository, SubmissionRepository>();
 builder.Services.AddTransient<IProblemRepository, ProblemRepository>();
+builder.Services.AddTransient<IUserRepository, UserRespository>();
+
 // --------- APP --------- //
 var app = builder.Build();
 

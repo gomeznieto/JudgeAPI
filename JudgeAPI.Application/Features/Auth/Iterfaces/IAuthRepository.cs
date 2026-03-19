@@ -1,6 +1,7 @@
-namespace JudgeAPI.Application.Features;
 using JudgeAPI.Application.Common.Interfaces;
 
-public interface IAuthRepository : IRepository<UserDTO>{
+namespace JudgeAPI.Application.Features;
+public interface IAuthRepository : IRepository<UserDTO>
+{
 
 }

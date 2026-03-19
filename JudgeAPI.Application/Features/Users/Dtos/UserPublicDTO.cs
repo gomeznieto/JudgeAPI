@@ -1,7 +1,10 @@
-﻿namespace JudgeAPI.Application.Features;
-using JudgeAPI.Models.Submission;
+﻿using JudgeAPI.Application.Features.Submissions.Dtos;
 
-public class UserPublicDTO : UserBaseDTO {
-    public required string UserName { get; set; }
-    public List<SubmissionResponseDTO> Submissons { get; set; } = new List<SubmissionResponseDTO>();
+namespace JudgeAPI.Application.Features.Users.Dtos
+{
+    public class UserPublicDTO : UserBaseDTO
+    {
+        public required string UserName { get; set; }
+        public List<SubmissionResponseDTO> Submissons { get; set; } = [];
+    }
 }

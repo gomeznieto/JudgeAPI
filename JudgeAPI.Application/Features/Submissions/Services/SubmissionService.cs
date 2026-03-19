@@ -2,49 +2,45 @@
 using JudgeAPI.Domain;
 using JudgeAPI.Application.Common.Interfaces;
 using JudgeAPI.Application.Common;
-using JudgeAPI.Application.Features;
+using JudgeAPI.Application.Features.Submissions.Dtos;
+using JudgeAPI.Services.Submissions;
+using JudgeAPI.Application.Features.Submissions.Interfaces;
 
-namespace JudgeAPI.Services.Submissions
+namespace JudgeAPI.Application.Features.Submissions.Services
 {
-    public class SubmissionService : ISubmissionService
-    {
-        private readonly IMapper _mapper;
-        private readonly IAnalyzer _submissionAnalyzerService;
-        private readonly ISubmissionRepository _submissionRespository;
-        private readonly IUnitOfWork _unitOfWork;
-
-        public SubmissionService(
+    public class SubmissionService(
             IMapper mapper,
             IAnalyzer submissionAnalyzerService,
             ISubmissionRepository submissionRepository,
             IUnitOfWork unitOfWork
-        )
-        {
-            _mapper = mapper;
-            _submissionAnalyzerService = submissionAnalyzerService;
-            _submissionRespository = submissionRepository;
-            _unitOfWork = unitOfWork;
-        }
+            )
+        : ISubmissionService
+    {
+        private readonly IMapper _mapper = mapper;
+        private readonly IAnalyzer _submissionAnalyzerService = submissionAnalyzerService;
+        private readonly ISubmissionRepository _submissionRespository = submissionRepository;
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
         // --- CREATE SUBMISSION --- //
         public async Task<SubmissionResponseDTO> CreateSubmissionAsync(string userId, int problemId, SubmissionCreateDTO submissionCreateDTO)
         {
-          var lastSubmission = await _submissionRespository.GetLastSubmissionAsync(userId);
-          var timeBetweenSubmissions = lastSubmission != null ? DateTime.UtcNow - lastSubmission.SubmissionTime : TimeSpan.Zero;
-          var minTimeBetweenSubmissions = TimeSpan.FromMinutes(1);
+            Submission? lastSubmission = await _submissionRespository.GetLastSubmissionAsync(userId);
+            TimeSpan timeBetweenSubmissions = lastSubmission != null ? DateTime.UtcNow - lastSubmission.SubmissionTime : TimeSpan.Zero;
+            TimeSpan minTimeBetweenSubmissions = TimeSpan.FromMinutes(1);
 
-          if(timeBetweenSubmissions < minTimeBetweenSubmissions){
-            throw new SubmissionTooSoonException ($"Por favor, espere {minTimeBetweenSubmissions - timeBetweenSubmissions:hh\\:mm\\:ss} antes de envíar el código.");
-          }
+            if (timeBetweenSubmissions < minTimeBetweenSubmissions)
+            {
+                throw new SubmissionTooSoonException($"Por favor, espere {minTimeBetweenSubmissions - timeBetweenSubmissions:hh\\:mm\\:ss} antes de envíar el código.");
+            }
 
-          var submission = _mapper.Map<Submission>(submissionCreateDTO);
-          submission.UserId = userId;
-          submission.ProblemId = problemId;
+            Submission submission = _mapper.Map<Submission>(submissionCreateDTO);
+            submission.UserId = userId;
+            submission.ProblemId = problemId;
 
-          _submissionRespository.Add(submission);
-          await _unitOfWork.SaveChangesAsync();
+            _submissionRespository.Add(submission);
+            _ = await _unitOfWork.SaveChangesAsync();
 
-          return _mapper.Map<SubmissionResponseDTO>(submission);
+            return _mapper.Map<SubmissionResponseDTO>(submission);
         }
 
         // --- GET SUBMISSION BY ID --- //

@@ -6,7 +6,7 @@ namespace JudgeAPI.Application.Features
     {
         public int UnitId { get; set; }
         [Required]
-        public required string Title { get; set; } 
+        public required string Title { get; set; }
         [Required]
         public required string Description { get; set; }
         public string? InputDescription { get; set; }
