@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Application.Features.Problems.Iterfaces;
 using JudgeAPI.Domain;
 
 namespace JudgeAPI.Application.Features

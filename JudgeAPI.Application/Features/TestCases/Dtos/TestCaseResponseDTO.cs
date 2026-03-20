@@ -1,4 +1,4 @@
-﻿namespace JudgeAPI.Models.TestCase
+﻿namespace JudgeAPI.Application.Features.TestCases.Dtos
 {
     public class TestCaseResponseDTO
     {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace JudgeAPI.Models.Unit
+namespace JudgeAPI.Application.Features.Units.Dtos
 {
     public class UnitCreateDTO
     {

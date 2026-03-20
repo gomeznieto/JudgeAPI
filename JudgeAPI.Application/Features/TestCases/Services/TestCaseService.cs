@@ -1,43 +1,44 @@
 ﻿using AutoMapper;
-using JudgeAPI.Data;
-using JudgeAPI.Entities;
-using JudgeAPI.Excerptions;
-using JudgeAPI.Models.TestCase;
-using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using JudgeAPI.Application.Common;
+using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Application.Features.TestCases.Dtos;
+using JudgeAPI.Application.Features.TestCases.Interfaces;
+using JudgeAPI.Domain;
 
-namespace JudgeAPI.Services.TestCase
+namespace JudgeAPI.Application.Features.TestCases.Services
 {
-    public class TestCaseService : ITestCaseService
+    public class TestCaseService(
+            IMapper mapper,
+            ITestCaseRepository testCaseRepository,
+            IProblemRepository problemRepository,
+            IUnitOfWork unitOfWork
+            )
+        : ITestCaseService
     {
-        private readonly AppDbContext _appDbContext;
-        private readonly IMapper _mapper;
+        private readonly IMapper _mapper = mapper;
+        private readonly ITestCaseRepository _testCaseRepository = testCaseRepository;
+        private readonly IProblemRepository _problemRepository = problemRepository;
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-        public TestCaseService(
-            AppDbContext appDbContext,
-            IMapper mapper
-        )
+        // ---  CREATE TEST CASE ---
+        public async Task<TestCaseResponseDTO> CreateTestCaseAsync(int problemId, TestCaseCreateDTO dto)
         {
-            _appDbContext = appDbContext;
-            _mapper = mapper;
-        }
-
-        // --- POST ---
-        public async Task<TestCaseResponseDTO> CreateTestCaseAsync(int problemId, TestCaseCreateDTO create)
-        {
-            var problem = await _appDbContext.Problems.FindAsync(problemId);
-
-            if (problem is null)
+            if (!await _problemRepository.AnyAsync(problemId))
+            {
                 throw new NotFoundException($"No existe un problema con ID {problemId}");
+            }
 
-            if (string.IsNullOrEmpty(create.ExpectedOutput) || string.IsNullOrEmpty(create.InputData))
+            if (string.IsNullOrEmpty(dto.ExpectedOutput) || string.IsNullOrEmpty(dto.InputData))
+            {
                 throw new ValidationException("Los campos de entrada y salida esperada no pueden estar vacíos.");
+            }
 
-            var test = _mapper.Map<Entities.TestCase>(create);
+            TestCase test = _mapper.Map<TestCase>(dto);
             test.ProblemId = problemId;
 
-            _appDbContext.Add(test);
-            await _appDbContext.SaveChangesAsync();
+            _testCaseRepository.Update(test);
+
+            _ = await _unitOfWork.SaveChangesAsync();
 
             return _mapper.Map<TestCaseResponseDTO>(test);
         }
@@ -45,49 +46,26 @@ namespace JudgeAPI.Services.TestCase
         // --- GET BY ID
         public async Task<TestCaseResponseDTO> GetTestCaseByIdAsync(int problemId, int id)
         {
-            var problem = await _appDbContext.Problems.FindAsync(problemId);
-
-            if (problem is null)
-                throw new NotFoundException($"No existe un problema con ID {problemId}");
-
-            var testCase = await _appDbContext.TestCases.FindAsync(id);
-
-            if (testCase is null)
-                throw new NotFoundException($"No existe un test case con el ID {id}.");
-
+            TestCase testCase = await _testCaseRepository.GetTestCaseByIdAsync(problemId, id) ?? throw new NotFoundException($"No existe un test case con el ID {id}.");
             return _mapper.Map<TestCaseResponseDTO>(testCase);
         }
 
         // --- GET LIST OF TEST CASES BY PROBLEM ID
         public async Task<List<TestCaseResponseDTO>> GetTestCasesByProblemIdAsync(int problemId, bool onlySamples = false)
         {
-            var problem = await _appDbContext.Problems.FindAsync(problemId);
-
-            if (problem is null)
-                throw new NotFoundException($"No existe un problema con ID {problemId}");
-
-            var query = _appDbContext.TestCases.Where(t => t.ProblemId == problemId);
-
-            if (onlySamples)
-                query = query.Where(t => t.IsSample);
-
-            var testCases = await query.ToListAsync();
-
-            return _mapper.Map<List<TestCaseResponseDTO>>(query);
+            IList<TestCase> testCases = await _testCaseRepository.GetTestCasesAsync(problemId, onlySamples);
+            return _mapper.Map<List<TestCaseResponseDTO>>(testCases);
         }
 
 
         // --- UPDATE ---
-        public async Task<TestCaseResponseDTO> UpdateTestCaseAsync(TestCaseUpdateDTO update)
+        public async Task<TestCaseResponseDTO> UpdateTestCaseAsync(TestCaseUpdateDTO dto)
         {
-            var testCase = await _appDbContext.TestCases.FindAsync(update.Id);
 
-            if (testCase is null)
-                throw new NotFoundException($"Test case {update.Id} no encontrado.");
+            TestCase testCase = await _testCaseRepository.GetByIdAsync(dto.Id) ?? throw new NotFoundException($"No existe un problema con ID {dto.Id}");
 
-            _mapper.Map(update, testCase);
-
-            await _appDbContext.SaveChangesAsync();
+            _ = _mapper.Map(dto, testCase);
+            _ = await _unitOfWork.SaveChangesAsync();
 
             return _mapper.Map<TestCaseResponseDTO>(testCase);
         }
@@ -95,37 +73,22 @@ namespace JudgeAPI.Services.TestCase
         // --- MOVE TEST TO OTHER PROBLEM ---
         public async Task<TestCaseResponseDTO> MoveTestCaseAsync(int problemId, int id, int newProblemId)
         {
-            var problem = await _appDbContext.Problems.FindAsync(problemId);
-
-            if (problem is null)
-                throw new NotFoundException($"No existe un problema con ID {problemId}");
-
-            var testCase = await _appDbContext.TestCases.FindAsync(id);
-
-            if (testCase is null)
-                throw new NotFoundException($"Test case {id} no encontrado.");
+            TestCase testCase = await _testCaseRepository.GetTestCaseByIdAsync(problemId, id) ?? throw new NotFoundException($"Test case {id} no encontrado.");
 
             testCase.ProblemId = newProblemId;
 
-            await _appDbContext.SaveChangesAsync();
+            _ = await _unitOfWork.SaveChangesAsync();
 
             return _mapper.Map<TestCaseResponseDTO>(testCase);
-
         }
 
 
         // --- DELETE ---
-        public async Task DeleteTestCaseAsync(int id)
+        public async Task DeleteTestCaseAsync(int problemId, int id)
         {
-            var exists = await _appDbContext.TestCases.AnyAsync(t => t.Id == id);
-
-            if (!exists)
-                throw new NotFoundException($"Test case {id} no econtrado.");
-
-            var affectedRows = await _appDbContext.TestCases.Where(t => t.Id == id).ExecuteDeleteAsync();
-
-            if(affectedRows == 0)
-                throw new InvalidOperationException($"No se pudo eliminar el test case con ID {id}.");
+            TestCase testCase = await _testCaseRepository.GetTestCaseByIdAsync(problemId, id) ?? throw new NotFoundException($"Test case {id} no encontrado.");
+            _testCaseRepository.Delete(testCase);
+            _ = _unitOfWork.SaveChangesAsync();
         }
 
     }

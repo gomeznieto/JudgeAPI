@@ -1,7 +1,4 @@
-﻿using JudgeAPI.Models.Problem;
-using JudgeAPI.Models.Unit;
-
-namespace JudgeAPI.Application.Features
+﻿namespace JudgeAPI.Application.Features.Problems.Iterfaces
 {
     public interface IProblemService
     {

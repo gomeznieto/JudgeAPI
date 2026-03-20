@@ -18,7 +18,9 @@ using JudgeAPI.Application.Features.Users.Interfaces;
 using JudgeAPI.Application.Features.Auth.Iterfaces;
 using JudgeAPI.Application.Common.Interfaces;
 using JudgeAPI.Infrastructure.Persistence.Repositories.Users;
-
+using JudgeAPI.Application.Features.Problems.Iterfaces;
+using JudgeAPI.Application.Features.TestCases.Interfaces;
+using JudgeAPI.Infrastructure.Persistence.TestCases;
 Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
@@ -89,7 +91,7 @@ builder.Services.AddTransient<IIdentityService, IdentityService>();
 builder.Services.AddTransient<ISubmissionRepository, SubmissionRepository>();
 builder.Services.AddTransient<IProblemRepository, ProblemRepository>();
 builder.Services.AddTransient<IUserRepository, UserRespository>();
-
+builder.Services.AddTransient<ITestCaseRepository, TestCaseRepository>();
 // --------- APP --------- //
 var app = builder.Build();
 

@@ -1,6 +1,7 @@
-﻿using JudgeAPI.Models.Unit;
+﻿using JudgeAPI.Application.Features.Units.Dtos;
+using JudgeAPI.Models.Unit;
 
-namespace JudgeAPI.Services.Unit
+namespace JudgeAPI.Application.Features.Units.Interfaces
 {
     public interface IUnitService
     {

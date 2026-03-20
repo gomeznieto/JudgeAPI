@@ -1,10 +1,9 @@
 ﻿using AutoMapper;
-using JudgeAPI.Data;
-using JudgeAPI.Entities;
+using JudgeAPI.Application.Features.Units.Dtos;
+using JudgeAPI.Application.Features.Units.Interfaces;
 using JudgeAPI.Models.Unit;
-using Microsoft.EntityFrameworkCore;
 
-namespace JudgeAPI.Services.Unit
+namespace JudgeAPI.Application.Features.Units.Services
 {
     public class UnitService(IMapper mapper) : IUnitService
     {

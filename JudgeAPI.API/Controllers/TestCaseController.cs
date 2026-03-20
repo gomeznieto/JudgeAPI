@@ -1,5 +1,5 @@
-﻿using JudgeAPI.Models.TestCase;
-using JudgeAPI.Services.TestCase;
+﻿using JudgeAPI.Application.Features.TestCases.Dtos;
+using JudgeAPI.Application.Features.TestCases.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
