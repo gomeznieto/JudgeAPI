@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
 using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Application.Features.Problems.Dtos;
 using JudgeAPI.Application.Features.Problems.Iterfaces;
-using JudgeAPI.Domain;
+using JudgeAPI.Domain.Entities;
 
-namespace JudgeAPI.Application.Features
+namespace JudgeAPI.Application.Features.Problems.Services
 {
     public class ProblemService(IMapper mapper,
                                 IProblemRepository problemRepository,
@@ -17,7 +18,7 @@ namespace JudgeAPI.Application.Features
         {
             Problem problem = _mapper.Map<Problem>(dto);
 
-            _problemRepository.Add(problem); 
+            _problemRepository.Add(problem);
             _ = await unitOfWork.SaveChangesAsync();
             ProblemResponseDTO mapping = _mapper.Map<ProblemResponseDTO>(problem);
 

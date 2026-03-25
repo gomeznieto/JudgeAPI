@@ -1,11 +1,10 @@
-﻿using JudgeAPI.Entities;
-using JudgeAPI.Models.Execution;
-using Microsoft.EntityFrameworkCore.Storage;
+﻿using JudgeAPI.Application.Features.CodeExecutor.Dtos;
+using JudgeAPI.Domain.Entities;
 
-namespace JudgeAPI.Services.Execution
+namespace JudgeAPI.Application.Features.CodeExecutor.Interfaces
 {
     public interface ICodeExecutorService
     {
-        Task<ExecutionResult> ExecuteAsync(int submissionId, Entities.TestCase test, CompilationResult result);
+        Task<ExecutionResultDTO> ExecuteAsync(int submissionId, TestCase test, CompilationResultDTO result);
     }
 }

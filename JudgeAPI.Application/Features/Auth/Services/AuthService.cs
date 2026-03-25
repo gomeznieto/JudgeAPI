@@ -7,6 +7,7 @@ using JudgeAPI.Application.Features.Submissions.Dtos;
 using JudgeAPI.Application.Features.Auth.Dtos;
 using JudgeAPI.Application.Features.Auth.Iterfaces;
 using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Domain.Entities;
 
 namespace JudgeAPI.Application.Features.Auth.Services
 {

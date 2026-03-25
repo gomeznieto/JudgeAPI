@@ -1,37 +1,39 @@
-﻿using JudgeAPI.Entities;
-using JudgeAPI.Models.Execution;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Diagnostics;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+﻿using System.Diagnostics;
+using JudgeAPI.Application.Common.Configuration;
+using JudgeAPI.Application.Features.CodeExecutor.Dtos;
+using JudgeAPI.Application.Features.CodeExecutor.Interfaces;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-namespace JudgeAPI.Services.Execution
+namespace JudgeAPI.Application.Features.CodeExecutor.Services
 {
-    public class GppCodeCompilerService : ICodeCompilerService
-    {
-        private readonly IConfiguration _configuration;
-        private readonly ILogger<GppCodeCompilerService> _logger;
-
-        public GppCodeCompilerService(
-            IConfiguration configuration,
+    public class GppCodeCompilerService(
+            IOptions<SubmissionOptions> submissionOptions,
+            IOptions<CompilerOptions> compilerOptions,
             ILogger<GppCodeCompilerService> logger
-        )
-        {
-            _configuration = configuration;
-            _logger = logger;
-        }
+            ) : ICodeCompilerService
+    {
+        private readonly SubmissionOptions _submissionOptions = submissionOptions.Value;
+        private readonly CompilerOptions _compilerOptions = compilerOptions.Value;
+        private readonly ILogger<GppCodeCompilerService> _logger = logger;
 
-        public async Task<CompilationResult> CompileAsync(string code, int submissionId)
+
+        public async Task<CompilationResultDTO> CompileAsync(string code, int submissionId)
         {
             if (string.IsNullOrWhiteSpace(code))
-                return CompilationResult.Failed();
+            {
+                return CompilationResultDTO.Failed();
+            }
 
-            string tempFolder = _configuration["SubmissionPaths:Temp"] ?? string.Empty;
+            string tempFolder = _submissionOptions.Temp ?? string.Empty;
             string basePath = AppContext.BaseDirectory;
             string docPath = Path.Combine(basePath, tempFolder);
 
             // Crear carpeta si no existe
             if (!Directory.Exists(docPath))
-                Directory.CreateDirectory(docPath);
+            {
+                _ = Directory.CreateDirectory(docPath);
+            }
 
             // Guardar archivo fuente
             string filePath = Path.Combine(docPath, $"{submissionId}.cpp");
@@ -41,44 +43,43 @@ namespace JudgeAPI.Services.Execution
             string exePath = Path.Combine(docPath, $"{submissionId}.exe");
 
             // Configuración para compilar
-            var std = _configuration["CompilerSettings:CppStandard"] ?? "c++17";
-            var flags = _configuration["CompilerSettings:Flags"] ?? "-Wall";
+            string std = _compilerOptions.CppStandard ?? "c++17";
+            string flags = _compilerOptions.Flags ?? "-Wall";
 
             // Compiler
-            using (Process cppProcess = new Process())
+            using Process cppProcess = new();
+
+            try
             {
-                try
+                cppProcess.StartInfo.UseShellExecute = false;
+                cppProcess.StartInfo.FileName = "g++";
+                cppProcess.StartInfo.Arguments = $"-std={std} {flags} \"{filePath}\" -o \"{exePath}\"";
+                cppProcess.StartInfo.RedirectStandardError = true;
+                cppProcess.StartInfo.CreateNoWindow = true;
+                cppProcess.StartInfo.WorkingDirectory = docPath;
+                _ = cppProcess.Start();
+
+                string error = await cppProcess.StandardError.ReadToEndAsync();
+                cppProcess.WaitForExit();
+
+                if (!string.IsNullOrWhiteSpace(error))
                 {
-                    cppProcess.StartInfo.UseShellExecute = false;
-                    cppProcess.StartInfo.FileName = "g++";
-                    cppProcess.StartInfo.Arguments = $"-std={std} {flags} \"{filePath}\" -o \"{exePath}\"";
-                    cppProcess.StartInfo.RedirectStandardError = true;
-                    cppProcess.StartInfo.CreateNoWindow = true;
-                    cppProcess.StartInfo.WorkingDirectory = docPath;
-                    cppProcess.Start();
-
-                    string error = await cppProcess.StandardError.ReadToEndAsync();
-                    cppProcess.WaitForExit();
-
-                    if (!string.IsNullOrWhiteSpace(error))
-                    {
-                        _logger.LogError("Error de compilación: {error}", error);
-                        File.Delete(filePath);
-                        return CompilationResult.Failed();
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Error de compilación: {ex.Message}");
+                    _logger.LogError("Error de compilación: {error}", error);
                     File.Delete(filePath);
-                    throw;
+                    return CompilationResultDTO.Failed();
                 }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error de compilación: {ex.Message}");
+                File.Delete(filePath);
+                throw;
             }
 
             File.Delete(filePath);
 
-            return new CompilationResult()
+            return new CompilationResultDTO()
             {
                 ExePath = exePath,
                 SourcePath = filePath

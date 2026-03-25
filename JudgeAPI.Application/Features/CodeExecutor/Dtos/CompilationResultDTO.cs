@@ -1,10 +1,14 @@
-﻿namespace JudgeAPI.Models.Execution
+﻿
+namespace JudgeAPI.Application.Features.CodeExecutor.Dtos
 {
-    public class CompilationResultDto
+    public class CompilationResultDTO
     {
         public string ExePath { get; set; } = string.Empty;
         public string SourcePath { get; set; } = string.Empty;
         public bool Success => !string.IsNullOrEmpty(ExePath);
-        public static CompilationResult Failed() => new CompilationResult();
+        public static CompilationResultDTO Failed()
+        {
+            return new();
+        }
     }
 }

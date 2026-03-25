@@ -1,4 +1,4 @@
-﻿namespace JudgeAPI.Models.Unit
+﻿namespace JudgeAPI.Application.Features.Units.Dtos
 {
     public class UnitResponseDTO
     {
@@ -6,6 +6,6 @@
         public string? Name { get; set; }
         public int Number { get; set; }
         public string? Description { get; set; }
-        public bool isActivate { get; set; }
+        public bool IsActivate { get; set; }
     }
 }

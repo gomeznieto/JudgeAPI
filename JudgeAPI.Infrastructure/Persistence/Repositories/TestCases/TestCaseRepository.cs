@@ -1,8 +1,10 @@
 using JudgeAPI.Application.Features.TestCases.Interfaces;
-using JudgeAPI.Domain;
+using JudgeAPI.Domain.Entities;
+using JudgeAPI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace JudgeAPI.Infrastructure.Persistence.TestCases{
+namespace JudgeAPI.Infrastructure.Persistence.Repositories.TestCases
+{
 
     public class TestCaseRepository(AppDbContext dbContext) : ITestCaseRepository
     {
@@ -10,7 +12,7 @@ namespace JudgeAPI.Infrastructure.Persistence.TestCases{
 
         public void Add(TestCase entity)
         {
-            _dbContext.TestCases.Add(entity);
+            _ = _dbContext.TestCases.Add(entity);
         }
 
         public Task<bool> AnyAsync(int id)
@@ -20,7 +22,7 @@ namespace JudgeAPI.Infrastructure.Persistence.TestCases{
 
         public void Delete(TestCase entity)
         {
-            _dbContext.TestCases.Remove(entity);
+            _ = _dbContext.TestCases.Remove(entity);
         }
 
         public async Task<List<TestCase>> GetAll(CancellationToken cancellationToken = default)
@@ -30,7 +32,7 @@ namespace JudgeAPI.Infrastructure.Persistence.TestCases{
 
         public async Task<TestCase?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.TestCases.FirstOrDefaultAsync(t => t.Id == id);
+            return await _dbContext.TestCases.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
         }
 
         public async Task<TestCase?> GetTestCaseByIdAsync(int problemId, int id, CancellationToken cancellationToken = default)
@@ -45,7 +47,7 @@ namespace JudgeAPI.Infrastructure.Persistence.TestCases{
 
         public void Update(TestCase entity)
         {
-            _dbContext.TestCases.Update(entity);
+            _ = _dbContext.TestCases.Update(entity);
         }
     }
 }

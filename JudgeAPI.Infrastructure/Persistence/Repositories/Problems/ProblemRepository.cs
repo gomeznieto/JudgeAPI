@@ -1,6 +1,6 @@
-
-using JudgeAPI.Application.Features;
-using JudgeAPI.Domain;
+using JudgeAPI.Application.Features.Problems.Iterfaces;
+using JudgeAPI.Domain.Entities;
+using JudgeAPI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace JudgeAPI.Infrastructure.Persistence.Repositories.Problems
@@ -11,7 +11,7 @@ namespace JudgeAPI.Infrastructure.Persistence.Repositories.Problems
 
         public void Add(Problem entity)
         {
-           _ = _dbContext.Problems.Add(entity);
+            _ = _dbContext.Problems.Add(entity);
         }
 
         public void Delete(Problem entity)
@@ -34,7 +34,8 @@ namespace JudgeAPI.Infrastructure.Persistence.Repositories.Problems
             _ = _dbContext.Problems.Update(entity);
         }
 
-        public Task<bool> AnyAsync(int id, CancellationToken cancellationToken = default){
+        public Task<bool> AnyAsync(int id, CancellationToken cancellationToken = default)
+        {
             return _dbContext.Problems.AnyAsync(p => p.Id == id, cancellationToken);
         }
     }

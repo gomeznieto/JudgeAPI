@@ -1,73 +1,58 @@
-﻿using JudgeAPI.Data;
-using JudgeAPI.Models.Execution;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using JudgeAPI.Application.Features.CodeExecutor.Dtos;
+using JudgeAPI.Application.Features.CodeExecutor.Interfaces;
+using JudgeAPI.Domain.Entities;
 
-namespace JudgeAPI.Services.Execution
+namespace JudgeAPI.Application.Features.CodeExecutor.Services
 {
     public class BasicExecutorService : ICodeExecutorService
     {
-        private readonly AppDbContext _appDbContext;
-        private readonly ILogger _logger;
-
-        public BasicExecutorService(
-            AppDbContext appDbContext,
-            ILogger<BasicExecutorService> logger
-        )
-        {
-            _appDbContext = appDbContext;
-            _logger = logger;
-        }
-
-        public async Task<ExecutionResult> ExecuteAsync(int submissionId, Entities.TestCase test, CompilationResult result)
+        public async Task<ExecutionResultDTO> ExecuteAsync(int submissionId, TestCase test, CompilationResultDTO result)
         {
 
-            using (Process exeProcess = new Process())
+            using Process exeProcess = new();
+            var stopwatch = Stopwatch.StartNew();
+
+            exeProcess.StartInfo.UseShellExecute = false;
+            exeProcess.StartInfo.FileName = result.ExePath;
+            exeProcess.StartInfo.CreateNoWindow = true;
+            exeProcess.StartInfo.RedirectStandardError = true;
+            exeProcess.StartInfo.RedirectStandardOutput = true;
+            exeProcess.StartInfo.RedirectStandardInput = true;
+            _ = exeProcess.Start();
+
+            await exeProcess.StandardInput.WriteAsync(test.InputData + "\n");
+            exeProcess.StandardInput.Close();
+
+            string output = await exeProcess.StandardOutput.ReadToEndAsync();
+            string error = await exeProcess.StandardError.ReadToEndAsync();
+
+            bool exited = exeProcess.WaitForExit(2000);
+
+            stopwatch.Stop();
+
+            if (!exited)
             {
-                var stopwatch = Stopwatch.StartNew();
+                exeProcess.Kill(entireProcessTree: true);
 
-                exeProcess.StartInfo.UseShellExecute = false;
-                exeProcess.StartInfo.FileName = result.ExePath;
-                exeProcess.StartInfo.CreateNoWindow = true;
-                exeProcess.StartInfo.RedirectStandardError = true;
-                exeProcess.StartInfo.RedirectStandardOutput = true;
-                exeProcess.StartInfo.RedirectStandardInput = true;
-                exeProcess.Start();
-
-                await exeProcess.StandardInput.WriteAsync(test.InputData + "\n");
-                exeProcess.StandardInput.Close();
-
-                string output = await exeProcess.StandardOutput.ReadToEndAsync();
-                var error = await exeProcess.StandardError.ReadToEndAsync();
-
-                var exited = exeProcess.WaitForExit(2000);
-
-                stopwatch.Stop();
-
-                if (!exited)
+                return new ExecutionResultDTO
                 {
-                    exeProcess.Kill(entireProcessTree: true);
-
-                    return new ExecutionResult
-                    {
-                        Output = "",
-                        ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
-                        TimedOut = true,
-                        IsCorrect = false,
-                        Error = "Time Limit Exceeded"
-                    };
-                }
-
-                return new ExecutionResult
-                {
-                    Output = output.Trim(),
+                    Output = "",
                     ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
-                    TimedOut = false,
-                    IsCorrect = output.Trim() == test.ExpectedOutput.Trim(),
-                    Error = string.IsNullOrWhiteSpace(error) ? null : error
-
+                    TimedOut = true,
+                    IsCorrect = false,
+                    Error = "Time Limit Exceeded"
                 };
-
             }
+
+            return new ExecutionResultDTO
+            {
+                Output = output.Trim(),
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
+                TimedOut = false,
+                IsCorrect = output.Trim() == test.ExpectedOutput.Trim(),
+                Error = string.IsNullOrWhiteSpace(error) ? null : error
+            };
 
         }
     }

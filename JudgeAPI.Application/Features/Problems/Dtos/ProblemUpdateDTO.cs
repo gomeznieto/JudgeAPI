@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace JudgeAPI.Application.Features
+namespace JudgeAPI.Application.Features.Problems.Dtos
 {
     public class ProblemUpdateDTO
     {

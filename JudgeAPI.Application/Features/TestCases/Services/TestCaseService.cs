@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
 using JudgeAPI.Application.Common;
 using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Application.Features.Problems.Iterfaces;
 using JudgeAPI.Application.Features.TestCases.Dtos;
 using JudgeAPI.Application.Features.TestCases.Interfaces;
-using JudgeAPI.Domain;
+using JudgeAPI.Domain.Entities;
 
 namespace JudgeAPI.Application.Features.TestCases.Services
 {

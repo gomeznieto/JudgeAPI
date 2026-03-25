@@ -1,38 +1,33 @@
 ﻿
-using JudgeAPI.Data;
-using StackExchange.Redis;
-using JudgeAPI.Excerptions;
-using JudgeAPI.Constants;
 using System.Text.Json;
+using JudgeAPI.Application.Common;
+using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Application.Features.CodeExecutor.Interfaces;
+using JudgeAPI.Application.Features.Submissions.Interfaces;
+using JudgeAPI.Domain;
+using JudgeAPI.Domain.Entities;
 
-namespace JudgeAPI.Services.Submissions
+namespace JudgeAPI.Application.Features.CodeExecutor.Services
 {
-    public class DistributedAnalyzer : IAnalyzer
+    public class DistributedAnalyzer(
+            ISubmissionRepository submissionRepository,
+            IUnitOfWork unitOfWork,
+            ICacheService cacheService
+                ) : IAnalyzer
     {
-        private readonly AppDbContext _appDbContext;
-        private readonly IConnectionMultiplexer _redis;
-
-        public DistributedAnalyzer(
-            AppDbContext appDbContext,
-            IConnectionMultiplexer redis
-        )
-        {
-            _appDbContext = appDbContext;
-            _redis = redis;
-        }
+        private readonly ISubmissionRepository _submissionRepository = submissionRepository;
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly ICacheService _cacheService = cacheService;
 
         public async Task<bool> AnalyzeAsync(int submissionId)
         {
-            var submission = await _appDbContext.Submissions.FindAsync(submissionId);
-
-            if (submission is null)
-                throw new NotFoundException($"Submission con ID {submissionId} no encontrada.");
+            Submission submission = await _submissionRepository.GetByIdAsync(submissionId) ?? throw new NotFoundException($"Submission con ID {submissionId} no encontrada.");
 
             submission.Verdict = SubmissionVerdicts.Queued;
-            await _appDbContext.SaveChangesAsync();
+            _ = await _unitOfWork.SaveChangesAsync();
 
-            var job = JsonSerializer.Serialize(new { SubmissionId = submissionId});
-            await _redis.GetDatabase().ListRightPushAsync("submissions", job);
+            string job = JsonSerializer.Serialize(new { SubmissionId = submissionId });
+            await _cacheService.ListRightPushAsync("submissions", job);
 
             return true;
         }

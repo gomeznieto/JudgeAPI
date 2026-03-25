@@ -1,7 +1,7 @@
-﻿namespace JudgeAPI.Application.Common;
-
-public interface ITokenService
+﻿namespace JudgeAPI.Application.Features.Auth.Iterfaces
 {
-    string GenerateToken(string userId, string Email, IList<string> roles);
+    public interface ITokenService
+    {
+        string GenerateToken(string userId, string Email, IList<string> roles);
+    }
 }
-

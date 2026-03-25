@@ -6,6 +6,7 @@ using JudgeAPI.Application.Features.Users.Dtos;
 using JudgeAPI.Application.Features.Submissions.Interfaces;
 using JudgeAPI.Application.Features.Users.Interfaces;
 using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Domain.Entities;
 
 namespace JudgeAPI.Application.Features.Users.Services
 {

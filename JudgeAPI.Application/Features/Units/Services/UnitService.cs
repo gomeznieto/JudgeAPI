@@ -1,19 +1,27 @@
 ﻿using AutoMapper;
+using JudgeAPI.Application.Common.Interfaces;
 using JudgeAPI.Application.Features.Units.Dtos;
 using JudgeAPI.Application.Features.Units.Interfaces;
+using JudgeAPI.Domain.Entities;
 using JudgeAPI.Models.Unit;
 
 namespace JudgeAPI.Application.Features.Units.Services
 {
-    public class UnitService(IMapper mapper) : IUnitService
+    public class UnitService(
+            IMapper mapper,
+            IUnitRepository unitRepository,
+            IUnitOfWork unitOfWork
+            ) : IUnitService
     {
         private readonly IMapper _mapper = mapper;
+        private readonly IUnitRepository _unitRepository = unitRepository;
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
         // GET
         public async Task<List<UnitResponseDTO>> GetAllAsync()
         {
-            var units = await _appDbContext.Units.ToListAsync();
-            var responseDTOs = _mapper.Map<List<UnitResponseDTO>>(units);
+            List<Unit> units = await _unitRepository.GetAll();
+            List<UnitResponseDTO> responseDTOs = _mapper.Map<List<UnitResponseDTO>>(units);
 
             return responseDTOs;
         }
@@ -21,49 +29,32 @@ namespace JudgeAPI.Application.Features.Units.Services
         // GET BY ID
         public async Task<UnitResponseDTO> GetByIdAsync(int id)
         {
-            var unit = await _appDbContext.Units.FindAsync(id);
-
-            if (unit is null)
-                throw new KeyNotFoundException($"No se encontró la unidad con ID {id}");
-
+            Unit unit = await _unitRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"No se encontró la unidad con ID {id}");
             return _mapper.Map<UnitResponseDTO>(unit);
         }
-        
+
         // GET BY ID WITH PROBLEMS
         public async Task<UnitWithProblemsDTO> GetUnitWithProblemsAsync(int unitId)
         {
-            var unit = await _appDbContext.Units
-                .Include(u => u.Problems)
-                .SingleOrDefaultAsync(u => u.Id == unitId);
-
-            if (unit == null)
-                throw new KeyNotFoundException($"No se encontró la unidad con ID {unitId}");
-
+            Unit unit = await _unitRepository.GetUnitWithProblemByIdAsync(unitId) ?? throw new KeyNotFoundException($"No se encontró la unidad con ID {unitId}");
             return _mapper.Map<UnitWithProblemsDTO>(unit);
         }
 
         // CREATE
         public async Task<UnitResponseDTO> CreateAsync(UnitCreateDTO dto)
         {
-            var unit = _mapper.Map<Entities.Unit>(dto);
-            _appDbContext.Add(unit);
-            await _appDbContext.SaveChangesAsync();
-
+            Unit unit = _mapper.Map<Unit>(dto);
+            _unitRepository.Add(unit);
+            _ = await _unitOfWork.SaveChangesAsync();
             return _mapper.Map<UnitResponseDTO>(unit);
         }
 
         // UPDATE
         public async Task<UnitResponseDTO> UpdateAsync(UnitUpdateDTO dto)
         {
-            var unit = await _appDbContext.Units.FindAsync(dto.Id);
-
-            if (unit is null)
-                throw new KeyNotFoundException($"No se encontró la unidad con ID {dto.Id}");
-
-            _mapper.Map(dto, unit);
-
-            await _appDbContext.SaveChangesAsync();
-
+            Unit unit = await _unitRepository.GetByIdAsync(dto.Id) ?? throw new KeyNotFoundException($"No se encontró la unidad con ID {dto.Id}");
+            _ = _mapper.Map(dto, unit);
+            _ = await _unitOfWork.SaveChangesAsync();
             return _mapper.Map<UnitResponseDTO>(unit);
         }
     }

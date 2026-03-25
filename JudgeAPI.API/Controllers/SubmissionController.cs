@@ -1,7 +1,4 @@
-﻿using JudgeAPI.Models.Submission;
-using JudgeAPI.Services.Submissions;
-using JudgeAPI.Excerptions;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 

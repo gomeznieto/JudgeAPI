@@ -1,7 +1,7 @@
-
-using JudgeAPI.Domain;
 using Microsoft.EntityFrameworkCore;
 using JudgeAPI.Application.Features.Submissions.Interfaces;
+using JudgeAPI.Domain.Entities;
+using JudgeAPI.Infrastructure.Data;
 
 namespace JudgeAPI.Infrastructure.Persistence.Repositories.Submissions
 {

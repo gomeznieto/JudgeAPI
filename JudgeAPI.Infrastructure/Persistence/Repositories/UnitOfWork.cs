@@ -1,4 +1,5 @@
 using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Infrastructure.Data;
 
 namespace JudgeAPI.Infrastructure.Persistence.Repositories
 {

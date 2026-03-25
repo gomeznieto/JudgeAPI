@@ -1,4 +1,4 @@
-﻿namespace JudgeAPI.Models.Execution
+﻿namespace JudgeAPI.Application.Features.CodeExecutor.Dtos
 {
     public class JobDTO
     {

@@ -1,5 +1,4 @@
-﻿
-namespace JudgeAPI.Services.Submissions
+﻿namespace JudgeAPI.Application.Features.CodeExecutor.Interfaces
 {
     public interface IAnalyzer
     {

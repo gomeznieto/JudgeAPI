@@ -1,4 +1,6 @@
-﻿namespace JudgeAPI.Application.Features.Problems.Iterfaces
+﻿using JudgeAPI.Application.Features.Problems.Dtos;
+
+namespace JudgeAPI.Application.Features.Problems.Iterfaces
 {
     public interface IProblemService
     {

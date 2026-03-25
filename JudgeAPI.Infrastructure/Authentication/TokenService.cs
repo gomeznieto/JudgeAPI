@@ -3,18 +3,13 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Application.Features.Auth.Iterfaces;
 
 namespace JudgeAPI.Infrastructure.Authentication;
 
-public class TokenService : ITokenService
+public class TokenService(IOptions<JwtSettings> jwtSettings) : ITokenService
 {
-    private readonly JwtSettings _jwtSettings;
-
-    public TokenService(IOptions<JwtSettings> jwtSettings)
-    {
-        _jwtSettings = jwtSettings.Value;
-    }
+    private readonly JwtSettings _jwtSettings = jwtSettings.Value;
 
     public string GenerateToken(string userId, string email, IList<string> roles)
     {

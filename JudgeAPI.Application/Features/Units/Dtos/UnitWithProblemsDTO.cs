@@ -1,6 +1,6 @@
-﻿using JudgeAPI.Models.Problem;
+﻿using JudgeAPI.Application.Features.Problems.Dtos;
 
-namespace JudgeAPI.Models.Unit
+namespace JudgeAPI.Application.Features.Units.Dtos
 {
     public class UnitWithProblemsDTO
     {

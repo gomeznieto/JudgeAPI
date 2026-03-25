@@ -1,34 +1,33 @@
-﻿namespace JudgeAPI.Infrastructure;
-
-using JudgeAPI.Domain;
+﻿using JudgeAPI.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-public class AppDbContext : IdentityDbContext<ApplicationUser>
+namespace JudgeAPI.Infrastructure.Data
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options){}
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<ApplicationUser>(options)
     {
-        base.OnModelCreating(modelBuilder);
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
 
-        modelBuilder.Entity<SubmissionResult>()
-            .HasOne(sr => sr.Submission)
-            .WithMany(s => s.Results)
-            .HasForeignKey(sr => sr.SubmissionId)
-            .OnDelete(DeleteBehavior.Cascade);
+            _ = builder.Entity<SubmissionResult>()
+                .HasOne(static sr => sr.Submission)
+                .WithMany(static s => s.Results)
+                .HasForeignKey(static sr => sr.SubmissionId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<SubmissionResult>()
-            .HasOne(sr => sr.TestCase)
-            .WithMany()
-            .HasForeignKey(sr => sr.TestCaseId)
-            .OnDelete(DeleteBehavior.Restrict);
+            _ = builder.Entity<SubmissionResult>()
+                .HasOne(static sr => sr.TestCase)
+                .WithMany()
+                .HasForeignKey(static sr => sr.TestCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
+
+        public required DbSet<Unit> Units { get; set; }
+        public required DbSet<Problem> Problems { get; set; }
+        public required DbSet<TestCase> TestCases { get; set; }
+        public required DbSet<Submission> Submissions { get; set; }
+        public required DbSet<SubmissionResult> SubmissionResults { get; set; }
     }
 
-    public DbSet<Unit> Units{ get; set; }
-    public DbSet<Problem> Problems{ get; set; }
-    public DbSet<TestCase> TestCases { get; set; }
-    public DbSet<Submission> Submissions { get; set; }
-    public DbSet<SubmissionResult> SubmissionResults { get; set; }
 }
-

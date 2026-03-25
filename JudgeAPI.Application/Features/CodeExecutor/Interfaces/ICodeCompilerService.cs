@@ -1,9 +1,9 @@
-﻿using JudgeAPI.Models.Execution;
+﻿using JudgeAPI.Application.Features.CodeExecutor.Dtos;
 
-namespace JudgeAPI.Services.Execution
+namespace JudgeAPI.Application.Features.CodeExecutor.Interfaces
 {
     public interface ICodeCompilerService
     {
-        Task<CompilationResult> CompileAsync(string code, int submissionId);
+        Task<CompilationResultDTO> CompileAsync(string code, int submissionId);
     }
 }
