@@ -1,12 +1,13 @@
-﻿using JudgeAPI.Application.Common;
-using JudgeAPI.Domain;
-using AutoMapper;
+﻿using AutoMapper;
 using JudgeAPI.Application.Features.Submissions.Dtos;
 using JudgeAPI.Application.Features.Users.Dtos;
 using JudgeAPI.Application.Features.Submissions.Interfaces;
 using JudgeAPI.Application.Features.Users.Interfaces;
 using JudgeAPI.Application.Common.Interfaces;
 using JudgeAPI.Domain.Entities;
+using JudgeAPI.Domain.Constants;
+using JudgeAPI.Application.Common.Exceptions;
+using JudgeAPI.Application.Common.Dtos;
 
 namespace JudgeAPI.Application.Features.Users.Services
 {

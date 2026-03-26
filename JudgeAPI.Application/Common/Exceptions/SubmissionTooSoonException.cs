@@ -1,9 +1,7 @@
-namespace JudgeAPI.Application.Common;
-
-public class SubmissionTooSoonException : AppException {
-    public SubmissionTooSoonException(string message) : base(message)
+namespace JudgeAPI.Application.Common.Exceptions
+{
+    public class SubmissionTooSoonException(string message) : AppException(message)
     {
-
     }
-}
 
+}

@@ -1,5 +1,5 @@
 ﻿using JudgeAPI.Application.Features.Auth.Dtos;
-
+using JudgeAPI.Application.Features.Users.Dtos;
 
 namespace JudgeAPI.Application.Features.Auth.Iterfaces
 {

@@ -1,28 +1,26 @@
-﻿using JudgeAPI.Data;
-using StackExchange.Redis;
+﻿using StackExchange.Redis;
 using Microsoft.EntityFrameworkCore;
-using JudgeAPI.Configuration;
-using JudgeAPI.Services.Execution;
+using JudgeAPI.Infrastructure.Data;
+using JudgeAPI.API.Configuration;
+using RunnerApp.Services;
 
 var builder = Host.CreateDefaultBuilder(args)
   .ConfigureServices((ctx, services) =>
       {
-      var config = ctx.Configuration;
+            var config = ctx.Configuration;
 
-      services.AddDbContext<AppDbContext>(options =>
-          options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+            _ = services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
 
-      services.AddSingleton<IConnectionMultiplexer>(
-          _ => ConnectionMultiplexer.Connect(config["Redis:Connection"] ?? "redis:6379"));
+            _ = services.AddSingleton<IConnectionMultiplexer>(
+                _ => ConnectionMultiplexer.Connect(config["Redis:Connection"] ?? "redis:6379"));
 
-      // RunnerConfig desde sección "Runner"
-      services.Configure<RunnerConfig>(config.GetSection("Runner"));
-      services.AddSingleton(resolver =>
-          resolver.GetRequiredService<Microsoft.Extensions.Options.IOptions<RunnerConfig>>().Value);
+            // RunnerConfig desde sección "Runner"
+            _ = services.Configure<RunnerConfig>(config.GetSection("Runner"));
+            _ = services.AddSingleton(resolver =>
+                resolver.GetRequiredService<Microsoft.Extensions.Options.IOptions<RunnerConfig>>().Value);
 
-      Console.WriteLine("🚀 RunnerApp iniciado...");
-
-      services.AddHostedService<RunnerWorker>();
+            _ = services.AddHostedService<RunnerWorker>();
 
       });
 

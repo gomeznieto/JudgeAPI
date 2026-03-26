@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using JudgeAPI.Application.Common;
+using JudgeAPI.Application.Common.Exceptions;
 using JudgeAPI.Application.Common.Interfaces;
 using JudgeAPI.Application.Features.Problems.Iterfaces;
 using JudgeAPI.Application.Features.TestCases.Dtos;

@@ -1,8 +1,7 @@
-﻿namespace JudgeAPI.Application.Common;
-
-public class ForbiddenException : AppException {
-    public ForbiddenException(string message) : base(message)
+﻿namespace JudgeAPI.Application.Common.Exceptions
+{
+    public class ForbiddenException(string message) : AppException(message)
     {
     }
-}
 
+}

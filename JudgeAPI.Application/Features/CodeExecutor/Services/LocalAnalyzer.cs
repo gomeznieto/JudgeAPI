@@ -1,10 +1,10 @@
-﻿using JudgeAPI.Application.Common;
+﻿using JudgeAPI.Application.Common.Exceptions;
 using JudgeAPI.Application.Common.Interfaces;
 using JudgeAPI.Application.Features.CodeExecutor.Interfaces;
 using JudgeAPI.Application.Features.SubmissionResults.Interfaces;
 using JudgeAPI.Application.Features.Submissions.Interfaces;
 using JudgeAPI.Application.Features.TestCases.Interfaces;
-using JudgeAPI.Domain;
+using JudgeAPI.Domain.Constants;
 using JudgeAPI.Domain.Entities;
 
 namespace JudgeAPI.Application.Features.CodeExecutor.Services

@@ -1,6 +1,6 @@
-﻿using JudgeAPI.Excerptions;
+﻿using JudgeAPI.Application.Common.Exceptions;
 
-namespace JudgeAPI.Middleware
+namespace JudgeAPI.API.Middleware
 {
     public class ExceptionMiddleware
     {

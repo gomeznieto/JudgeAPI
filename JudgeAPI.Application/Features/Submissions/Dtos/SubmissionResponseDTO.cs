@@ -1,4 +1,4 @@
-﻿using JudgeAPI.Domain;
+﻿using JudgeAPI.Domain.Constants;
 
 namespace JudgeAPI.Application.Features.Submissions.Dtos
 {

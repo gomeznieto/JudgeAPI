@@ -1,4 +1,4 @@
-﻿using JudgeAPI.Domain;
+﻿using JudgeAPI.Domain.Constants;
 
 namespace JudgeAPI.Application.Features.Submissions.Dtos
 {
@@ -9,7 +9,7 @@ namespace JudgeAPI.Application.Features.Submissions.Dtos
         public string ExpectedOutput { get; set; } = string.Empty;
         public string? Output { get; set; }
         public string Language { get; set; } = Languages.Cpp;
-        public bool IsCorrect{ get; set; } = true;
+        public bool IsCorrect { get; set; } = true;
         public int? ExecutionTimeMs { get; set; }
         public bool IsExecuted { get; set; }
         public bool IsTle { get; set; }

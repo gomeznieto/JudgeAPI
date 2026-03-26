@@ -1,4 +1,4 @@
-﻿namespace JudgeAPI.Configuration
+﻿namespace JudgeAPI.API.Configuration
 {
     public class RunnerConfig
     {

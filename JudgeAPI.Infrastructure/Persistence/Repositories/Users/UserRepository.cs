@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using JudgeAPI.Application.Features.Users.Interfaces;
 using JudgeAPI.Infrastructure.Data;
+using JudgeAPI.Infrastructure.Identity;
 
 namespace JudgeAPI.Infrastructure.Persistence.Repositories.Users
 {

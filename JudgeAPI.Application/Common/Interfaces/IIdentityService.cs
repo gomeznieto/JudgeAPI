@@ -1,4 +1,6 @@
+using JudgeAPI.Application.Common.Dtos;
 using JudgeAPI.Application.Features;
+using JudgeAPI.Application.Features.Users.Dtos;
 
 namespace JudgeAPI.Application.Common.Interfaces
 {
@@ -17,7 +19,7 @@ namespace JudgeAPI.Application.Common.Interfaces
         Task<IdentityResultDTO> CreateRoleAsync(string role);
         Task AddRoleAsync(UserDTO user, string role);
         Task<IList<string>?> GetRoleAsync(UserDTO user);
-        Task<IList<string>> GetAllRolesAsync();
+        Task<List<string?>> GetAllRolesAsync();
         Task<bool> IsInRolAsync(UserDTO user, string role);
         Task<IdentityResultDTO> RemoveFromRoleAsync(UserDTO user, string role);
     }

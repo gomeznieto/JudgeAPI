@@ -4,50 +4,46 @@ using JudgeAPI.Models.Unit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace JudgeAPI.Controllers
+namespace JudgeAPI.API.Controllers
 {
     [ApiController]
     [Route("api/units")]
     [Authorize]
-    public class UnitControllers : ControllerBase
+    public class UnitControllers(IUnitService unitService) : ControllerBase
     {
-        private readonly IUnitService _unitService;
-
-        public UnitControllers(IUnitService unitService)
-        {
-            _unitService = unitService;
-        }
+        private readonly IUnitService _unitService = unitService;
 
         [HttpGet(Name = "GetAllUnits")]
         public async Task<ActionResult<List<UnitResponseDTO>>> GetAll()
         {
-            var units = await _unitService.GetAllAsync();
+            List<UnitResponseDTO> units = await _unitService.GetAllAsync();
             return Ok(units);
         }
 
         [HttpPost]
-        public async Task<ActionResult<UnitResponseDTO>> Post([FromBody]UnitCreateDTO unitDTO)
+        public async Task<ActionResult<UnitResponseDTO>> Post([FromBody] UnitCreateDTO unitDTO)
         {
-          Console.WriteLine(unitDTO.Name);
-            var responseDTO = await _unitService.CreateAsync(unitDTO);
-            return CreatedAtAction(nameof(GetUnit), new {id = responseDTO.Id}, responseDTO);
+            UnitResponseDTO responseDTO = await _unitService.CreateAsync(unitDTO);
+            return CreatedAtAction(nameof(GetUnit), new { id = responseDTO.Id }, responseDTO);
 
         }
 
         [HttpGet("{id:int}", Name = "GetUnit")]
         public async Task<ActionResult<UnitResponseDTO>> GetUnit(int id)
         {
-            var unit = await _unitService.GetByIdAsync(id);
+            UnitResponseDTO unit = await _unitService.GetByIdAsync(id);
             return Ok(unit);
         }
 
         [HttpPut("{id:int}")]
         public async Task<ActionResult<UnitResponseDTO>> Put(int id, [FromBody] UnitUpdateDTO dto)
         {
-            if(id != dto.Id)
+            if (id != dto.Id)
+            {
                 return BadRequest("El Id del body no coincide con la ruta");
+            }
 
-            var responseDTO = await _unitService.UpdateAsync(dto);
+            UnitResponseDTO responseDTO = await _unitService.UpdateAsync(dto);
             return Ok(responseDTO);
         }
     }

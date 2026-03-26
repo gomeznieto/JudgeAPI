@@ -1,6 +1,4 @@
-﻿using JudgeAPI.Domain;
-using JudgeAPI.Application.Common;
-using JudgeAPI.Application.Features.Submissions.Interfaces;
+﻿using JudgeAPI.Application.Features.Submissions.Interfaces;
 
 using AutoMapper;
 using JudgeAPI.Application.Features.Submissions.Dtos;
@@ -8,6 +6,10 @@ using JudgeAPI.Application.Features.Auth.Dtos;
 using JudgeAPI.Application.Features.Auth.Iterfaces;
 using JudgeAPI.Application.Common.Interfaces;
 using JudgeAPI.Domain.Entities;
+using JudgeAPI.Domain.Constants;
+using JudgeAPI.Application.Common.Exceptions;
+using JudgeAPI.Application.Common.Dtos;
+using JudgeAPI.Application.Features.Users.Dtos;
 
 namespace JudgeAPI.Application.Features.Auth.Services
 {

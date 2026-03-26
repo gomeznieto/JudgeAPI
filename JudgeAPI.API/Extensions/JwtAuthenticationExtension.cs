@@ -1,19 +1,19 @@
-﻿using JudgeAPI.Configuration;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using JudgeAPI.Infrastructure.Authentication;
 
-namespace JudgeAPI.Extensions
+namespace JudgeAPI.API.Extensions
 {
     public static class JwtAuthenticationExtension
     {
         public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
-            var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
+            JwtSettings? jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
 
-            services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+            _ = services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
 
-            services.AddAuthentication(options =>
+            _ = services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;

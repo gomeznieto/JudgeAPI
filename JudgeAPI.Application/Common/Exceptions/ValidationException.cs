@@ -1,8 +1,7 @@
-﻿namespace JudgeAPI.Application.Common;
-
-public class ValidationException : AppException {
-    public ValidationException(string message) : base(message)
+﻿namespace JudgeAPI.Application.Common.Exceptions
+{
+    public class ValidationException(string message) : AppException(message)
     {
     }
-}
 
+}

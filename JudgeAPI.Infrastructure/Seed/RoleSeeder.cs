@@ -1,5 +1,5 @@
-﻿using JudgeAPI.Constants;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
+using JudgeAPI.Domain.Constants;
 
 namespace JudgeAPI.Infrastructure.Seed
 {
@@ -7,13 +7,13 @@ namespace JudgeAPI.Infrastructure.Seed
     {
         public static async Task SeedRoleAsync(RoleManager<IdentityRole> roleManager)
         {
-            string[] roleNames = { Roles.Admin, Roles.Student, Roles.Moderator };
+            string[] roleNames = [Roles.Admin, Roles.Student, Roles.Moderator];
 
-            foreach (var roleName in roleNames)
+            foreach (string roleName in roleNames)
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
-                    await roleManager.CreateAsync(new IdentityRole(roleName));
+                    _ = await roleManager.CreateAsync(new IdentityRole(roleName));
                 }
             }
         }

@@ -1,379 +1,375 @@
-﻿
-using JudgeAPI.Configuration;
-using JudgeAPI.Constants;
-using JudgeAPI.Data;
-using JudgeAPI.Entities;
-using JudgeAPI.Models.Execution;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text;
+using JudgeAPI.API.Configuration;
+using JudgeAPI.Infrastructure.Data;
+using JudgeAPI.Application.Features.CodeExecutor.Dtos;
+using JudgeAPI.Domain.Constants;
+using JudgeAPI.Domain.Entities;
 
-namespace JudgeAPI.Services.Execution
+namespace RunnerApp.Services
 {
-  public class RunnerWorker : BackgroundService
-  {
-    private readonly AppDbContext _appDbContext;
-    private readonly IDatabase _redis;
-    private readonly RunnerConfig _cfg;
-    private readonly IConfiguration _configuration;
-    private const int MaxCompileErrorLines = 20;
-
-    public RunnerWorker(
-        AppDbContext appDbContext,
-        IConnectionMultiplexer muxer,
-        RunnerConfig cfg,
-        IConfiguration configuration
-        )
+    public class RunnerWorker(
+                AppDbContext appDbContext,
+                IConnectionMultiplexer muxer,
+                RunnerConfig cfg,
+                IConfiguration configuration
+                )
+ : BackgroundService
     {
-      _appDbContext = appDbContext;
-      _redis = muxer.GetDatabase();
-      _cfg = cfg;
-      _configuration = configuration;
-    }
+        private readonly AppDbContext _appDbContext = appDbContext;
+        private readonly IDatabase _redis = muxer.GetDatabase();
+        private readonly RunnerConfig _cfg = cfg;
+        private readonly IConfiguration _configuration = configuration;
+        private const int MaxCompileErrorLines = 20;
 
-    // Leemos de redis cuando algo llega
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-      while (!stoppingToken.IsCancellationRequested)
-      {
-        var payload = await _redis.ListLeftPopAsync("submissions");
-
-        if (payload.IsNullOrEmpty)
+        // Leemos de redis cuando algo llega
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-          await Task.Delay(400, stoppingToken);
-          continue;
-        }
-
-        JobDTO? job = null;
-
-        try
-        {
-          job = JsonSerializer.Deserialize<JobDTO>(payload!);
-        }
-        catch (Exception ex)
-        {
-          Console.WriteLine($"[Runner] Procesando deserialización de JSON: {ex}");
-        }
-
-        if (job is null || job!.SubmissionId <= 0) continue;
-
-        try
-        {
-          Console.WriteLine($"[Runner] Procesando submission {job.SubmissionId}");
-          await HandleJobAsync(job, stoppingToken);
-        }
-        catch (Exception ex)
-        {
-
-          Console.WriteLine($"[Runner] Error procesando submission {job?.SubmissionId}: {ex}");
-        }
-
-      }
-    }
-
-    // Revisa submission enviado
-    private async Task HandleJobAsync(JobDTO job, CancellationToken stoppingToken)
-    {
-      Console.WriteLine($"[Runner] Entró a HandleJobAsync con submission {job.SubmissionId}");
-
-      // Buscamos Submission con el ID
-      var submission = await _appDbContext.Submissions.FirstOrDefaultAsync(s => s.Id == job.SubmissionId);
-
-      if (submission is null)
-        return;
-
-      // Buscamos los casos de prueba
-      var testCases = await _appDbContext.TestCases
-        .Where(t => t.ProblemId == submission.ProblemId)
-        .OrderBy(t => t.Order)
-        .ToListAsync();
-
-      // Creamos la carpeta y agregar el archivo cpp
-      var guid = Guid.NewGuid().ToString("N");
-      var tempDirBase = Path.Combine(Directory.GetCurrentDirectory(), "jobs");
-
-      Directory.CreateDirectory(tempDirBase);
-
-      var jobsRoot = "/app/jobs";
-
-      // TEST
-      Console.WriteLine($"[Runner] jobsRoot = {jobsRoot}");
-
-      var tempDir = Path.Combine(jobsRoot, $"job_{submission.Id}_{guid}");
-
-      Directory.CreateDirectory(tempDir);
-
-      // Permisos para escribir
-      var dirInfo = new DirectoryInfo(tempDir);
-      dirInfo.Attributes &= ~FileAttributes.ReadOnly;
-
-      var chmodResult = Process.Start(new ProcessStartInfo
-          {
-          FileName = "chmod",
-          Arguments = "-R 777 " + tempDir,
-          RedirectStandardOutput = true,
-          RedirectStandardError = true,
-          UseShellExecute = false,
-          CreateNoWindow = true
-          });
-      chmodResult?.WaitForExit();
-
-      var src = Path.Combine(tempDir, "main.cpp");
-      File.WriteAllText(src, submission.Code);
-
-      // Compilar
-      var std = _configuration["CompilerSettings:CppStandard"] ?? "c++17";
-      var flags = _configuration["CompilerSettings:Flags"] ?? "-Wall";
-      var compileCmd = $"ls -R /app/jobs && g++ -std=c++17 -Wall /app/jobs/job_{submission.Id}_{guid}/main.cpp -o /app/jobs/job_{submission.Id}_{guid}/a.out";
-
-      Console.WriteLine($"[Runner] wrote source? {File.Exists(src)} size={new FileInfo(src).Length}");
-      Console.WriteLine($"[Runner] dir exists: {Directory.Exists(tempDir)}");
-      foreach (var file in Directory.GetFiles(tempDir))
-      {
-        Console.WriteLine($"[Runner] - {file}");
-      }
-
-      var compileRes = await RunDockerAsync(tempDir, compileCmd, captureStdErr: true, stoppingToken);
-
-      // Si el ćodigo no compila, retornamos
-      if (compileRes.ExitCode != 0)
-      {
-        submission.Verdict = SubmissionVerdicts.CompilationError; 
-        var normalizedError = NormalizeStdErr(compileRes.StdErr); // Normalizamos el error para que saque los paths
-        submission.CompileError = TruncateError(normalizedError, MaxCompileErrorLines); // Si excede las 20 líneas, se queda con las más importantes
-        submission.CompileExitCode = compileRes.ExitCode;
-
-        await _appDbContext.SaveChangesAsync(stoppingToken);
-
-        return;
-      }
-
-      // Ejecutar test
-      var toInsert = new List<SubmissionResult>();
-      var executionResults = new List<ExecutionResult>(); 
-      bool hasTle = false;
-      bool hasRe = false;
-      bool hasMle = false;
-      bool hasAllCorrect = true;
-
-      foreach (var tc in testCases)
-      {
-        var inPath = Path.Combine(tempDir, "input.txt");
-        var outPath = Path.Combine(tempDir, "output.txt");
-
-        await File.WriteAllTextAsync(inPath, tc.InputData ?? string.Empty, stoppingToken);
-        if (File.Exists(outPath)) File.Delete(outPath);
-
-        var runCmd = $"timeout {_cfg.PerTestTimeoutSeconds}s {tempDir}/a.out < {tempDir}/input.txt > {tempDir}/output.txt";
-        var sw = Stopwatch.StartNew();
-        var runRes = await RunDockerAsync(tempDir, runCmd, captureStdErr: true, stoppingToken);
-        sw.Stop();
-
-        var output = File.Exists(outPath) ? await File.ReadAllTextAsync(outPath, stoppingToken) : string.Empty;
-        
-        // Analizamos el código
-        bool isTle = runRes.ExitCode == 124;
-        bool isMle = runRes.ExitCode == 137;
-        bool isRe = runRes.ExitCode != 0 && !isTle && !isMle;
-        bool isCorrect = false;
-
-        // Si todo transcurrió sin errores, verificamos que la respuesta sea correcta
-        if (!isTle && !isRe && !isMle)
-        {
-          isCorrect = Normalize(output) == Normalize(tc.ExpectedOutput ?? string.Empty);
-        }
-
-        // Guardamos los resultados. Al menos un resultado por error o tiempo excedido se gurdaría como intento.
-        toInsert.Add(new SubmissionResult
+            while (!stoppingToken.IsCancellationRequested)
             {
-            SubmissionId = submission.Id,
-            TestCaseId = tc.Id,
+                RedisValue payload = await _redis.ListLeftPopAsync("submissions");
 
-            IsExecuted = true,
-            IsCorrect = isCorrect,
-            IsTle = isTle, 
-            IsMle = isMle,
-            IsRe = isRe,
+                if (payload.IsNullOrEmpty)
+                {
+                    await Task.Delay(400, stoppingToken);
+                    continue;
+                }
 
-            Output = !isTle ? TrimForDb(output) : null, // Si se excede de tiempo, no hay salida
-            ErrorOutput = isRe ? runRes.StdErr : null, 
+                JobDTO? job = null;
 
-            ExitCode = runRes.ExitCode,
-            ExecutionTimeMs = sw.ElapsedMilliseconds,
-            });
-        
+                try
+                {
+                    job = JsonSerializer.Deserialize<JobDTO>(payload!);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Runner] Procesando deserialización de JSON: {ex}");
+                }
 
-        // Determinamos el resultado del Test case
-        if(isTle){
-          hasTle = true;
-          break;
+                if (job is null || job!.SubmissionId <= 0)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    Console.WriteLine($"[Runner] Procesando submission {job.SubmissionId}");
+                    await HandleJobAsync(job, stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Runner] Error procesando submission {job?.SubmissionId}: {ex}");
+                }
+
+            }
         }
 
-        if (isRe) {
-          hasRe = true;
-        }
-
-        if(isMle) {
-          hasMle = true;
-        }
-
-        if(!isCorrect){
-          hasAllCorrect = false;
-        }
-      }
-
-      // Determinamos el resultado del veredicto general
-      if (hasTle){
-        submission.Verdict = SubmissionVerdicts.TimeLimitEsceeded;
-      } else if (hasMle){
-        submission.Verdict = SubmissionVerdicts.MemoryLimitEsceeded;
-      } else if (hasRe){
-        submission.Verdict = SubmissionVerdicts.RuntimeError;
-      } else if (hasAllCorrect) {
-        submission.Verdict = SubmissionVerdicts.Correct;
-      } else {
-        submission.Verdict = SubmissionVerdicts.Wrong;
-      }
-
-      if (toInsert.Count > 0)
-        _appDbContext.SubmissionResults.AddRange(toInsert);
-
-      await _appDbContext.SaveChangesAsync(stoppingToken);
-
-      try { Directory.Delete(tempDir, true); } catch { /* ignore */ }
-    }
-
-    private static string Normalize(string s)
-      => s.Replace("\r\n", "\n").TrimEnd();
-
-    private static string TrimForDb(string s, int max = 2000)
-      => s.Length <= max ? s : s.Substring(0, max);
-
-    private static bool IsContinuationLine(string line){
-
-      bool hasCodeLineMarker = line.Contains("|", StringComparison.Ordinal);
-      bool hasErrorPointer = line.Contains("^", StringComparison.Ordinal);
-      bool hasErrorUnderline = line.Contains("~", StringComparison.Ordinal);
-
-      return hasCodeLineMarker || hasErrorPointer || hasErrorUnderline;
-    }
-
-    // Truncamos la cantidad de caracteres del StandardError
-    private static string TruncateError(string normalized, int maxLines = 20){
-
-      if (string.IsNullOrWhiteSpace(normalized))
-        return normalized;
-
-      var linesStdErr = normalized.Split('\n');
-      int index = 0;  
-
-      if(linesStdErr.Length > maxLines){
-        StringBuilder response = new StringBuilder();
-
-        while(index < linesStdErr.Length && (index < maxLines || IsContinuationLine(linesStdErr[index]))) {
-          response.AppendLine(linesStdErr[index]);
-          index++;
-        }
-
-        return response.ToString();
-      }
-
-      return normalized;
-    }
-
-    // Normalizamos el error para que no coloque la ruta del archivo que se compiló
-    private static string NormalizeStdErr(string stdErr)
-    {
-      if (string.IsNullOrWhiteSpace(stdErr))
-        return stdErr;
-
-      var lines = stdErr.Split('\n');
-      var sb = new StringBuilder();
-
-      foreach (var line in lines)
-      {
-        string normalizedLine = line;
-
-        int cppIndex = line.LastIndexOf(".cpp", StringComparison.OrdinalIgnoreCase);
-        if (cppIndex >= 0)
+        // Revisa submission enviado
+        private async Task HandleJobAsync(JobDTO job, CancellationToken stoppingToken = default)
         {
-          int slashIndex = Math.Max(
-              line.LastIndexOf('/', cppIndex),
-              line.LastIndexOf('\\', cppIndex)
-              );
+            Console.WriteLine($"[Runner] Entró a HandleJobAsync con submission {job.SubmissionId}");
 
-          if (slashIndex >= 0 && slashIndex + 1 < line.Length)
-          {
-            normalizedLine = line.Substring(slashIndex + 1);
-          }
+            // Buscamos Submission con el ID
+            var submission = await _appDbContext.Submissions.FirstOrDefaultAsync(s => s.Id == job.SubmissionId);
+
+            if (submission is null)
+            {
+                return;
+            }
+
+            // Buscamos los casos de prueba
+            IList<TestCase> testCases = await _appDbContext.TestCases
+                .Where(t => t.ProblemId == submission.ProblemId)
+                .OrderBy(t => t.Order)
+                .ToListAsync(stoppingToken);
+
+            // Creamos la carpeta y agregar el archivo cpp
+            var guid = Guid.NewGuid().ToString("N");
+            var tempDirBase = Path.Combine(Directory.GetCurrentDirectory(), "jobs");
+
+            Directory.CreateDirectory(tempDirBase);
+
+            var jobsRoot = "/app/jobs";
+
+            // TEST
+            Console.WriteLine($"[Runner] jobsRoot = {jobsRoot}");
+
+            var tempDir = Path.Combine(jobsRoot, $"job_{submission.Id}_{guid}");
+
+            Directory.CreateDirectory(tempDir);
+
+            // Permisos para escribir
+            var dirInfo = new DirectoryInfo(tempDir);
+            dirInfo.Attributes &= ~FileAttributes.ReadOnly;
+
+            var chmodResult = Process.Start(new ProcessStartInfo
+                    {
+                    FileName = "chmod",
+                    Arguments = "-R 777 " + tempDir,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                    });
+            chmodResult?.WaitForExit();
+
+            var src = Path.Combine(tempDir, "main.cpp");
+            File.WriteAllText(src, submission.Code);
+
+            // Compilar
+            var std = _configuration["CompilerSettings:CppStandard"] ?? "c++17";
+            var flags = _configuration["CompilerSettings:Flags"] ?? "-Wall";
+            var compileCmd = $"ls -R /app/jobs && g++ -std=c++17 -Wall /app/jobs/job_{submission.Id}_{guid}/main.cpp -o /app/jobs/job_{submission.Id}_{guid}/a.out";
+
+            Console.WriteLine($"[Runner] wrote source? {File.Exists(src)} size={new FileInfo(src).Length}");
+            Console.WriteLine($"[Runner] dir exists: {Directory.Exists(tempDir)}");
+            foreach (var file in Directory.GetFiles(tempDir))
+            {
+                Console.WriteLine($"[Runner] - {file}");
+            }
+
+            var compileRes = await RunDockerAsync(tempDir, compileCmd, captureStdErr: true, stoppingToken);
+
+            // Si el ćodigo no compila, retornamos
+            if (compileRes.ExitCode != 0)
+            {
+                submission.Verdict = SubmissionVerdicts.CompilationError; 
+                var normalizedError = NormalizeStdErr(compileRes.StdErr); // Normalizamos el error para que saque los paths
+                submission.CompileError = TruncateError(normalizedError, MaxCompileErrorLines); // Si excede las 20 líneas, se queda con las más importantes
+                submission.CompileExitCode = compileRes.ExitCode;
+
+                await _appDbContext.SaveChangesAsync(stoppingToken);
+
+                return;
+            }
+
+            // Ejecutar test
+            var toInsert = new List<SubmissionResult>();
+            var executionResults = new List<ExecutionResultDTO>(); 
+            bool hasTle = false;
+            bool hasRe = false;
+            bool hasMle = false;
+            bool hasAllCorrect = true;
+
+            foreach (var tc in testCases)
+            {
+                var inPath = Path.Combine(tempDir, "input.txt");
+                var outPath = Path.Combine(tempDir, "output.txt");
+
+                await File.WriteAllTextAsync(inPath, tc.InputData ?? string.Empty, stoppingToken);
+                if (File.Exists(outPath)) File.Delete(outPath);
+
+                var runCmd = $"timeout {_cfg.PerTestTimeoutSeconds}s {tempDir}/a.out < {tempDir}/input.txt > {tempDir}/output.txt";
+                var sw = Stopwatch.StartNew();
+                var runRes = await RunDockerAsync(tempDir, runCmd, captureStdErr: true, stoppingToken);
+                sw.Stop();
+
+                var output = File.Exists(outPath) ? await File.ReadAllTextAsync(outPath, stoppingToken) : string.Empty;
+
+                // Analizamos el código
+                bool isTle = runRes.ExitCode == 124;
+                bool isMle = runRes.ExitCode == 137;
+                bool isRe = runRes.ExitCode != 0 && !isTle && !isMle;
+                bool isCorrect = false;
+
+                // Si todo transcurrió sin errores, verificamos que la respuesta sea correcta
+                if (!isTle && !isRe && !isMle)
+                {
+                    isCorrect = Normalize(output) == Normalize(tc.ExpectedOutput ?? string.Empty);
+                }
+
+                // Guardamos los resultados. Al menos un resultado por error o tiempo excedido se gurdaría como intento.
+                toInsert.Add(new SubmissionResult
+                        {
+                        SubmissionId = submission.Id,
+                        TestCaseId = tc.Id,
+
+                        IsExecuted = true,
+                        IsCorrect = isCorrect,
+                        IsTle = isTle, 
+                        IsMle = isMle,
+                        IsRe = isRe,
+
+                        Output = !isTle ? TrimForDb(output) : null, // Si se excede de tiempo, no hay salida
+                        ErrorOutput = isRe ? runRes.StdErr : null, 
+
+                        ExitCode = runRes.ExitCode,
+                        ExecutionTimeMs = sw.ElapsedMilliseconds,
+                        });
+
+
+                // Determinamos el resultado del Test case
+                if(isTle){
+                    hasTle = true;
+                    break;
+                }
+
+                if (isRe) {
+                    hasRe = true;
+                }
+
+                if(isMle) {
+                    hasMle = true;
+                }
+
+                if(!isCorrect){
+                    hasAllCorrect = false;
+                }
+            }
+
+            // Determinamos el resultado del veredicto general
+            if (hasTle){
+                submission.Verdict = SubmissionVerdicts.TimeLimitEsceeded;
+            } else if (hasMle){
+                submission.Verdict = SubmissionVerdicts.MemoryLimitEsceeded;
+            } else if (hasRe){
+                submission.Verdict = SubmissionVerdicts.RuntimeError;
+            } else if (hasAllCorrect) {
+                submission.Verdict = SubmissionVerdicts.Correct;
+            } else {
+                submission.Verdict = SubmissionVerdicts.Wrong;
+            }
+
+            if (toInsert.Count > 0)
+                _appDbContext.SubmissionResults.AddRange(toInsert);
+
+            await _appDbContext.SaveChangesAsync(stoppingToken);
+
+            try { Directory.Delete(tempDir, true); } catch { /* ignore */ }
         }
 
-        sb.AppendLine(normalizedLine);
-      }
+        private static string Normalize(string s)
+            => s.Replace("\r\n", "\n").TrimEnd();
 
-      return sb.ToString();
+        private static string TrimForDb(string s, int max = 2000)
+            => s.Length <= max ? s : s.Substring(0, max);
+
+        private static bool IsContinuationLine(string line){
+
+            bool hasCodeLineMarker = line.Contains("|", StringComparison.Ordinal);
+            bool hasErrorPointer = line.Contains("^", StringComparison.Ordinal);
+            bool hasErrorUnderline = line.Contains("~", StringComparison.Ordinal);
+
+            return hasCodeLineMarker || hasErrorPointer || hasErrorUnderline;
+        }
+
+        // Truncamos la cantidad de caracteres del StandardError
+        private static string TruncateError(string normalized, int maxLines = 20){
+
+            if (string.IsNullOrWhiteSpace(normalized))
+                return normalized;
+
+            var linesStdErr = normalized.Split('\n');
+            int index = 0;  
+
+            if(linesStdErr.Length > maxLines){
+                StringBuilder response = new StringBuilder();
+
+                while(index < linesStdErr.Length && (index < maxLines || IsContinuationLine(linesStdErr[index]))) {
+                    response.AppendLine(linesStdErr[index]);
+                    index++;
+                }
+
+                return response.ToString();
+            }
+
+            return normalized;
+        }
+
+        // Normalizamos el error para que no coloque la ruta del archivo que se compiló
+        private static string NormalizeStdErr(string stdErr)
+        {
+            if (string.IsNullOrWhiteSpace(stdErr))
+                return stdErr;
+
+            var lines = stdErr.Split('\n');
+            var sb = new StringBuilder();
+
+            foreach (var line in lines)
+            {
+                string normalizedLine = line;
+
+                int cppIndex = line.LastIndexOf(".cpp", StringComparison.OrdinalIgnoreCase);
+                if (cppIndex >= 0)
+                {
+                    int slashIndex = Math.Max(
+                            line.LastIndexOf('/', cppIndex),
+                            line.LastIndexOf('\\', cppIndex)
+                            );
+
+                    if (slashIndex >= 0 && slashIndex + 1 < line.Length)
+                    {
+                        normalizedLine = line.Substring(slashIndex + 1);
+                    }
+                }
+
+                sb.AppendLine(normalizedLine);
+            }
+
+            return sb.ToString();
+        }
+
+        // Ejecutamos el código
+        private async Task<ProcessResultDTO> RunDockerAsync(string hostWorkDir, string innerCmd, bool captureStdErr, CancellationToken stoppingToken)
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "docker",
+                RedirectStandardOutput = true,
+                RedirectStandardError = captureStdErr,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = Directory.Exists("/app") ? "/app" : "/"
+            };
+
+            // var hostJobsDir = Environment.GetEnvironmentVariable("HOST_JOBS_DIR") ?? "./jobs";
+            var hostJobsDir = Environment.GetEnvironmentVariable("HOST_JOBS_DIR")
+                ?? throw new InvalidOperationException("HOST_JOBS_DIR no configurado");
+
+            psi.ArgumentList.Add("run");
+            psi.ArgumentList.Add("--rm");
+            psi.ArgumentList.Add("--network"); 
+            psi.ArgumentList.Add("none");
+            psi.ArgumentList.Add($"--cpus={_cfg.Cpus}");
+            psi.ArgumentList.Add($"--memory={_cfg.MemoryMb}m");
+            psi.ArgumentList.Add("--pids-limit"); 
+            psi.ArgumentList.Add("256");
+            psi.ArgumentList.Add("--read-only");
+            psi.ArgumentList.Add("--tmpfs"); psi.ArgumentList.Add("/tmp");
+            psi.ArgumentList.Add("-v");
+            psi.ArgumentList.Add($"{hostJobsDir}:/app/jobs");
+            psi.ArgumentList.Add("--user"); 
+            psi.ArgumentList.Add("1000:1000");
+            psi.ArgumentList.Add(_cfg.ImageName);
+            psi.ArgumentList.Add("/bin/sh");
+            psi.ArgumentList.Add("-lc");
+            psi.ArgumentList.Add(innerCmd);
+
+            Console.WriteLine("[Runner] cmd: docker " + string.Join(' ', psi.ArgumentList.Select(a => a.Contains(' ') ? $"\"{a}\"" : a)));
+
+            using var p = Process.Start(psi);
+            if (p is null) return new ProcessResultDTO { ExitCode = -1 };
+
+            var outTask = p.StandardOutput.ReadToEndAsync();
+            var errTask = captureStdErr ? p.StandardError.ReadToEndAsync() : Task.FromResult(string.Empty);
+
+            await p.WaitForExitAsync(stoppingToken);
+            var outText = await outTask;
+            var errText = await errTask;
+
+            Console.WriteLine($"[docker output]\n{outText}");
+            Console.WriteLine($"[docker error]\n{errText}");
+
+            return new ProcessResultDTO
+            {
+                ExitCode = p.ExitCode,
+                StdOut = outText,
+                StdErr = errText
+            };
+        }
+
     }
-
-    // Ejecutamos el código
-    private async Task<ProcessResult> RunDockerAsync(string hostWorkDir, string innerCmd, bool captureStdErr, CancellationToken stoppingToken)
-    {
-      var psi = new ProcessStartInfo
-      {
-        FileName = "docker",
-        RedirectStandardOutput = true,
-        RedirectStandardError = captureStdErr,
-        UseShellExecute = false,
-        CreateNoWindow = true,
-        WorkingDirectory = Directory.Exists("/app") ? "/app" : "/"
-      };
-
-      // var hostJobsDir = Environment.GetEnvironmentVariable("HOST_JOBS_DIR") ?? "./jobs";
-      var hostJobsDir = Environment.GetEnvironmentVariable("HOST_JOBS_DIR")
-        ?? throw new InvalidOperationException("HOST_JOBS_DIR no configurado");
-
-      psi.ArgumentList.Add("run");
-      psi.ArgumentList.Add("--rm");
-      psi.ArgumentList.Add("--network"); 
-      psi.ArgumentList.Add("none");
-      psi.ArgumentList.Add($"--cpus={_cfg.Cpus}");
-      psi.ArgumentList.Add($"--memory={_cfg.MemoryMb}m");
-      psi.ArgumentList.Add("--pids-limit"); 
-      psi.ArgumentList.Add("256");
-      psi.ArgumentList.Add("--read-only");
-      psi.ArgumentList.Add("--tmpfs"); psi.ArgumentList.Add("/tmp");
-      psi.ArgumentList.Add("-v");
-      psi.ArgumentList.Add($"{hostJobsDir}:/app/jobs");
-      psi.ArgumentList.Add("--user"); 
-      psi.ArgumentList.Add("1000:1000");
-      psi.ArgumentList.Add(_cfg.ImageName);
-      psi.ArgumentList.Add("/bin/sh");
-      psi.ArgumentList.Add("-lc");
-      psi.ArgumentList.Add(innerCmd);
-
-      Console.WriteLine("[Runner] cmd: docker " + string.Join(' ', psi.ArgumentList.Select(a => a.Contains(' ') ? $"\"{a}\"" : a)));
-
-      using var p = Process.Start(psi);
-      if (p is null) return new ProcessResult { ExitCode = -1 };
-
-      var outTask = p.StandardOutput.ReadToEndAsync();
-      var errTask = captureStdErr ? p.StandardError.ReadToEndAsync() : Task.FromResult(string.Empty);
-
-      await p.WaitForExitAsync(stoppingToken);
-      var outText = await outTask;
-      var errText = await errTask;
-
-      Console.WriteLine($"[docker output]\n{outText}");
-      Console.WriteLine($"[docker error]\n{errText}");
-
-      return new ProcessResult
-      {
-        ExitCode = p.ExitCode,
-        StdOut = outText,
-        StdErr = errText
-      };
-    }
-
-  }
 }

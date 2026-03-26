@@ -1,6 +1,6 @@
-﻿using JudgeAPI.Constants;
-using Microsoft.AspNetCore.Identity;
-using JudgeAPI.Entities;
+﻿using Microsoft.AspNetCore.Identity;
+using JudgeAPI.Infrastructure.Identity;
+using JudgeAPI.Domain.Constants;
 
 namespace JudgeAPI.Infrastructure.Seed
 {
@@ -12,29 +12,26 @@ namespace JudgeAPI.Infrastructure.Seed
             string? adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "superfuerteysecreto123!";
 
             if (string.IsNullOrWhiteSpace(adminPassword) || string.IsNullOrEmpty(adminEmail))
+            {
                 throw new Exception("ADMIN_PASSWORD o ADMIN_MAIL no está configurado en las variables de entorno.");
+            }
 
-            var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
+            ApplicationUser? existingAdmin = await userManager.FindByEmailAsync(adminEmail);
 
             if (existingAdmin is null)
             {
-                var adminUser = new ApplicationUser
+                ApplicationUser adminUser = new()
                 {
                     UserName = adminEmail,
                     Email = adminEmail,
                     EmailConfirmed = true
                 };
 
-                var result = await userManager.CreateAsync(adminUser, adminPassword);
+                IdentityResult result = await userManager.CreateAsync(adminUser, adminPassword);
 
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(adminUser, Roles.Admin);
-                }
-                else
-                {
-                    throw new Exception($"Error creando Admin inicial: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-                }
+                _ = result.Succeeded
+                    ? await userManager.AddToRoleAsync(adminUser, Roles.Admin)
+                    : throw new Exception($"Error creando Admin inicial: {string.Join(", ", result.Errors.Select(e => e.Description))}");
             }
 
         }

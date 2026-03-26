@@ -1,4 +1,5 @@
 ﻿using JudgeAPI.Domain.Entities;
+using JudgeAPI.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 

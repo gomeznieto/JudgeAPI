@@ -1,7 +1,6 @@
-﻿namespace JudgeAPI.Application.Common;
-
-public class AppException : Exception {
-    public AppException(string message) : base(message) { }
-
+﻿namespace JudgeAPI.Application.Common.Exceptions
+{
+    public class AppException(string message) : Exception(message)
+    {
+    }
 }
-

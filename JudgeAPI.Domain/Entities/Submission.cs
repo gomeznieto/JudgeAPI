@@ -1,4 +1,6 @@
-﻿namespace JudgeAPI.Domain.Entities
+﻿using JudgeAPI.Domain.Constants;
+
+namespace JudgeAPI.Domain.Entities
 {
     public class Submission
     {

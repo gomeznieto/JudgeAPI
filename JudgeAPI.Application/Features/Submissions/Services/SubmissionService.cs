@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using JudgeAPI.Application.Common.Interfaces;
-using JudgeAPI.Application.Common;
 using JudgeAPI.Application.Features.Submissions.Dtos;
 using JudgeAPI.Application.Features.Submissions.Interfaces;
 using JudgeAPI.Application.Features.CodeExecutor.Interfaces;
 using JudgeAPI.Domain.Entities;
+using JudgeAPI.Application.Common.Exceptions;
 
 namespace JudgeAPI.Application.Features.Submissions.Services
 {

@@ -1,70 +1,63 @@
 ﻿using JudgeAPI.Application.Features;
 using JudgeAPI.Application.Features.Auth.Dtos;
 using JudgeAPI.Application.Features.Auth.Iterfaces;
+using JudgeAPI.Application.Features.Users.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace JudgeAPI.API.Controllers;
-
-[ApiController]
-[Route("api/auth")]
-public class AuthController : ControllerBase
+namespace JudgeAPI.API.Controllers
 {
-    private readonly IAuthService _authService;
-
-    public AuthController(
-            IAuthService authService    
+    [ApiController]
+    [Route("api/auth")]
+    public class AuthController(
+            IAuthService authService
             )
+        : ControllerBase
     {
-        _authService = authService;
+        private readonly IAuthService _authService = authService;
+
+        [HttpPost("register")]
+        public async Task<ActionResult<UserBaseDTO>> Register(UserCreateDTO dto)
+        {
+            UserBaseDTO responseDTO = await _authService.RegisterAsync(dto);
+            return Ok(responseDTO);
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult<TokenResponseDTO>> Login([FromBody] LoginRequestDTO request)
+        {
+            TokenResponseDTO tokenResponse = await _authService.LoginAsync(request);
+            return Ok(tokenResponse);
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            return Ok();
+        }
+
+        [HttpPost("refresh-token")]
+        public IActionResult RefreshToken()
+        {
+            return Ok();
+        }
+
+        [HttpPost("confirm-email")]
+        public IActionResult ConfirmEmail()
+        {
+            return Ok();
+        }
+
+        [HttpPost("forgot-password")]
+        public IActionResult ForgotPassword()
+        {
+            return Ok();
+        }
+
+        [HttpPost("reset-password")]
+        public IActionResult ResetPassword()
+        {
+            return Ok();
+        }
     }
 
-    [HttpPost("register")]
-    public async Task<ActionResult<UserBaseDTO>> Register(UserCreateDTO dto)
-    {
-        var responseDTO = await _authService.RegisterAsync(dto);
-        return Ok(responseDTO);
-    }
-
-    [HttpPost("login")]
-    public async Task<ActionResult<TokenResponseDTO>> Login([FromBody] LoginRequestDTO request)
-    {
-        var tokenResponse = await _authService.LoginAsync(request);   
-        return Ok(tokenResponse);
-    }
-
-    [HttpPost("logout")]
-    public IActionResult Logout()
-    {
-        // TODO: Implement logout logic
-        return Ok();
-    }
-
-    [HttpPost("refresh-token")]
-    public IActionResult RefreshToken()
-    {
-        // TODO: Implement token refresh logic
-        return Ok();
-    }
-
-    [HttpPost("confirm-email")]
-    public IActionResult ConfirmEmail()
-    {
-        // TODO: Implement email confirmation logic
-        return Ok();
-    }
-
-    [HttpPost("forgot-password")]
-    public IActionResult ForgotPassword()
-    {
-        // TODO: Implement forgot password logic
-        return Ok();
-    }
-
-    [HttpPost("reset-password")]
-    public IActionResult ResetPassword()
-    {
-        // TODO: Implement password reset logic
-        return Ok();
-    }
 }
-

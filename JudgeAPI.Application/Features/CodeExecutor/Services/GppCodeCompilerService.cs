@@ -2,20 +2,17 @@
 using JudgeAPI.Application.Common.Configuration;
 using JudgeAPI.Application.Features.CodeExecutor.Dtos;
 using JudgeAPI.Application.Features.CodeExecutor.Interfaces;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace JudgeAPI.Application.Features.CodeExecutor.Services
 {
     public class GppCodeCompilerService(
             IOptions<SubmissionOptions> submissionOptions,
-            IOptions<CompilerOptions> compilerOptions,
-            ILogger<GppCodeCompilerService> logger
+            IOptions<CompilerOptions> compilerOptions
             ) : ICodeCompilerService
     {
         private readonly SubmissionOptions _submissionOptions = submissionOptions.Value;
         private readonly CompilerOptions _compilerOptions = compilerOptions.Value;
-        private readonly ILogger<GppCodeCompilerService> _logger = logger;
 
 
         public async Task<CompilationResultDTO> CompileAsync(string code, int submissionId)
@@ -64,15 +61,13 @@ namespace JudgeAPI.Application.Features.CodeExecutor.Services
 
                 if (!string.IsNullOrWhiteSpace(error))
                 {
-                    _logger.LogError("Error de compilación: {error}", error);
                     File.Delete(filePath);
                     return CompilationResultDTO.Failed();
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.LogError($"Error de compilación: {ex.Message}");
                 File.Delete(filePath);
                 throw;
             }

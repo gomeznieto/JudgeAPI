@@ -1,33 +1,38 @@
+using DotNetEnv;
+using JudgeAPI.API.Configuration;
+using JudgeAPI.API.Extensions;
+using JudgeAPI.API.Middleware;
+using JudgeAPI.Application.Common.Interfaces;
+using JudgeAPI.Application.Features.Auth.Iterfaces;
+using JudgeAPI.Application.Features.Auth.Services;
+using JudgeAPI.Application.Features.CodeExecutor.Interfaces;
+using JudgeAPI.Application.Features.CodeExecutor.Services;
+using JudgeAPI.Application.Features.Problems.Iterfaces;
+using JudgeAPI.Application.Features.Problems.Services;
+using JudgeAPI.Application.Features.SubmissionResults.Interfaces;
+using JudgeAPI.Application.Features.Submissions.Interfaces;
+using JudgeAPI.Application.Features.Submissions.Services;
+using JudgeAPI.Application.Features.TestCases.Interfaces;
+using JudgeAPI.Application.Features.TestCases.Services;
+using JudgeAPI.Application.Features.Units.Interfaces;
+using JudgeAPI.Application.Features.Units.Services;
+using JudgeAPI.Application.Features.Users.Interfaces;
+using JudgeAPI.Application.Features.Users.Services;
 using JudgeAPI.Infrastructure;
-using JudgeAPI.Configuration;
-using JudgeAPI.Extensions;
+using JudgeAPI.Infrastructure.Data;
+using JudgeAPI.Infrastructure.Identity;
+using JudgeAPI.Infrastructure.Persistence.Repositories.Problems;
+using JudgeAPI.Infrastructure.Persistence.Repositories.SubmissionResults;
+using JudgeAPI.Infrastructure.Persistence.Repositories.Submissions;
+using JudgeAPI.Infrastructure.Persistence.Repositories.TestCases;
+using JudgeAPI.Infrastructure.Persistence.Repositories.Users;
 using JudgeAPI.Infrastructure.Seed;
-using JudgeAPI.Middleware;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using DotNetEnv;
-using JudgeAPI.Infrastructure.Identity;
-using JudgeAPI.Application.Features.Submissions.Interfaces;
-using JudgeAPI.Infrastructure.Persistence.Repositories.Submissions;
-using JudgeAPI.Infrastructure.Persistence.Repositories.Problems;
-using JudgeAPI.Application.Features.Auth.Services;
-using JudgeAPI.Application.Features.Users.Services;
-using JudgeAPI.Application.Features.Users.Interfaces;
-using JudgeAPI.Application.Features.Auth.Iterfaces;
-using JudgeAPI.Application.Common.Interfaces;
-using JudgeAPI.Infrastructure.Persistence.Repositories.Users;
-using JudgeAPI.Application.Features.Problems.Iterfaces;
-using JudgeAPI.Application.Features.TestCases.Interfaces;
-using JudgeAPI.Application.Features.CodeExecutor.Services;
-using JudgeAPI.Application.Features.CodeExecutor.Interfaces;
-using JudgeAPI.Infrastructure.Persistence.Repositories.SubmissionResults;
-using JudgeAPI.Application.Features.Problems.Services;
-using JudgeAPI.Infrastructure.Persistence.Repositories.TestCases;
-using JudgeAPI.Infrastructure.Data;
 
 Env.Load();
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
@@ -48,10 +53,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
 // MAPPER
-builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 // RUNNER MODE
-var mode = builder.Configuration["RunMode"] ?? "distributed";
+string mode = builder.Configuration["RunMode"] ?? "distributed";
 
 if (mode.Equals("local", StringComparison.OrdinalIgnoreCase))
 {
@@ -72,7 +77,6 @@ builder.Services.AddSingleton(new RunnerConfig()
 });
 
 // SERVICES PROJECT
-builder.Services.AddTransient<ICurrentUserService, CurrentUserService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IUnitService, UnitService>();
 builder.Services.AddTransient<IProblemService, ProblemService>();
@@ -86,11 +90,11 @@ builder.Services.AddTransient<ISubmissionRepository, SubmissionRepository>();
 builder.Services.AddTransient<IProblemRepository, ProblemRepository>();
 builder.Services.AddTransient<IUserRepository, UserRespository>();
 builder.Services.AddTransient<ITestCaseRepository, TestCaseRepository>();
-builder.Services.AddTransient<ISubmissionResultRepository, SubmissionResultRepository>();
+builder.Services.AddTransient<ISubmissionResultsRepository, SubmissionResultRepository>();
 builder.Services.AddTransient<IUnitRepository, UnitRespository>();
 
 // --------- APP --------- //
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // MIGRATE AL INICIAR SERVICIO
 using (IServiceScope scope = app.Services.CreateScope())
@@ -149,3 +153,4 @@ app.MapHealthChecks("/api/health");
 app.MapControllers();
 
 app.Run();
+

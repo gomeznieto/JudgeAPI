@@ -5,7 +5,7 @@ using JudgeAPI.Application.Features.Problems.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace JudgeAPI.Controllers
+namespace JudgeAPI.API.Controllers
 {
     [ApiController]
     [Route("api/units/{unitId}/problems")]

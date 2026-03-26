@@ -1,68 +1,73 @@
 ﻿using AutoMapper;
+using JudgeAPI.Models.Unit;
+using JudgeAPI.Domain.Entities;
+using JudgeAPI.Application.Features.Auth.Dtos;
+
 using JudgeAPI.Application.Features.TestCases.Dtos;
 using JudgeAPI.Application.Features.Units.Dtos;
-using JudgeAPI.Models.Unit;
+using JudgeAPI.Application.Features.Problems.Dtos;
+using JudgeAPI.Application.Features.Users.Dtos;
+using JudgeAPI.Infrastructure.Identity;
+using JudgeAPI.Application.Features.Submissions.Dtos;
 
-namespace JudgeAPI.Mapping
+namespace JudgeAPI.API.Mapping
 {
     public class MappingProfile : Profile
     {
         public MappingProfile()
         {
-
             // Unit
-            CreateMap<Unit, UnitResponseDTO>();
-            CreateMap<UnitCreateDTO, Unit>();
-            CreateMap<UnitUpdateDTO, Unit>();
-            CreateMap<Unit, UnitWithProblemsDTO>();
+            _ = CreateMap<Unit, UnitResponseDTO>();
+            _ = CreateMap<UnitCreateDTO, Unit>();
+            _ = CreateMap<UnitUpdateDTO, Unit>();
+            _ = CreateMap<Unit, UnitWithProblemsDTO>();
 
             // Problems
-            CreateMap<Problem, ProblemResponseDTO>();
-            CreateMap<ProblemCreateDTO, Problem>();
-            CreateMap<ProblemUpdateDTO, Problem>();
+            _ = CreateMap<Problem, ProblemResponseDTO>();
+            _ = CreateMap<ProblemCreateDTO, Problem>();
+            _ = CreateMap<ProblemUpdateDTO, Problem>();
 
             // Users
-            CreateMap<UserCreateDTO, ApplicationUser>();
-            CreateMap<UserPrivateDTO, ApplicationUser>();
-            CreateMap<UserUpdateDTO, ApplicationUser>()
-                .ForMember(dest => dest.Email, opt => opt.Condition(src => src.Email != null))
-                .ForMember(dest => dest.FirstName, opt => opt.Condition(src => src.FirstName != null))
-                .ForMember(dest => dest.LastName, opt => opt.Condition(src => src.LastName != null))
-                .ForMember(dest => dest.University, opt => opt.Condition(src => src.University != null))
-                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
+            _ = CreateMap<UserCreateDTO, ApplicationUser>();
+            _ = CreateMap<UserPrivateDTO, ApplicationUser>();
+            _ = CreateMap<UserUpdateDTO, ApplicationUser>()
+                .ForMember(static dest => dest.Email, static opt => opt.Condition(static src => src.Email != null))
+                .ForMember(static dest => dest.FirstName, static opt => opt.Condition(static src => src.FirstName != null))
+                .ForMember(static dest => dest.LastName, static opt => opt.Condition(static src => src.LastName != null))
+                .ForMember(static dest => dest.University, static opt => opt.Condition(static src => src.University != null))
+                .ForMember(static dest => dest.PasswordHash, static opt => opt.Ignore());
 
-            CreateMap<UserUpdateDTO, UserPrivateDTO>()
-                .ForMember(dest => dest.Email, opt => opt.Condition(src => src.Email != null))
-                .ForMember(dest => dest.FirstName, opt => opt.Condition(src => src.FirstName != null))
-                .ForMember(dest => dest.LastName, opt => opt.Condition(src => src.LastName != null))
-                .ForMember(dest => dest.University, opt => opt.Condition(src => src.University != null));
+            _ = CreateMap<UserUpdateDTO, UserPrivateDTO>()
+                .ForMember(static dest => dest.Email, static opt => opt.Condition(static src => src.Email != null))
+                .ForMember(static dest => dest.FirstName, static opt => opt.Condition(static src => src.FirstName != null))
+                .ForMember(static dest => dest.LastName, static opt => opt.Condition(static src => src.LastName != null))
+                .ForMember(static dest => dest.University, static opt => opt.Condition(static src => src.University != null));
 
-            CreateMap<ApplicationUser, UserPrivateDTO>();
-            CreateMap<ApplicationUser, UserPublicDTO>();
-            CreateMap<ApplicationUser, UserAdminDTO>();
+            _ = CreateMap<ApplicationUser, UserPrivateDTO>();
+            _ = CreateMap<ApplicationUser, UserPublicDTO>();
+            _ = CreateMap<ApplicationUser, UserAdminDTO>();
 
-            CreateMap<ApplicationUser, TokenResponse>()
-                .ForMember(dest => dest.Email, opt => opt.Condition(src => src.Email != null))
-                .ForMember(dest => dest.FirstName, opt => opt.Condition(src => src.FirstName != null))
-                .ForMember(dest => dest.LastName, opt => opt.Condition(src => src.LastName != null))
-                .ForMember(dest => dest.University, opt => opt.Condition(src => src.University != null));
+            _ = CreateMap<ApplicationUser, TokenResponseDTO>()
+                .ForMember(static dest => dest.Email, static opt => opt.Condition(static src => src.Email != null))
+                .ForMember(static dest => dest.FirstName, static opt => opt.Condition(static src => src.FirstName != null))
+                .ForMember(static dest => dest.LastName, static opt => opt.Condition(static src => src.LastName != null))
+                .ForMember(static dest => dest.University, static opt => opt.Condition(static src => src.University != null));
 
             // Submissions
-            CreateMap<SubmissionCreateDTO, Submission>();
-            CreateMap<Submission, SubmissionResponseDTO>();
-            CreateMap<Submission, SubmissionResponseWithResultDTO>();
+            _ = CreateMap<SubmissionCreateDTO, Submission>();
+            _ = CreateMap<Submission, SubmissionResponseDTO>();
 
-            CreateMap<SubmissionResult, SubmissionResultResponseDTO>()
-                .ForMember(dest => dest.Input, opt => opt.MapFrom(src => src.TestCase!.InputData))
-                .ForMember(dest => dest.ExpectedOutput, opt => opt.MapFrom(src => src.TestCase!.ExpectedOutput));
+            _ = CreateMap<SubmissionResult, SubmissionResultResponseDTO>()
+                .ForMember(static dest => dest.Input, static opt => opt.MapFrom(static src => src.TestCase!.InputData))
+                .ForMember(static dest => dest.ExpectedOutput, static opt => opt.MapFrom(static src => src.TestCase!.ExpectedOutput));
 
             // Test Case
-            CreateMap<TestCaseCreateDTO, TestCase>();
-            CreateMap<TestCase,  TestCaseResponseDTO>();
+            _ = CreateMap<TestCaseCreateDTO, TestCase>();
+            _ = CreateMap<TestCase, TestCaseResponseDTO>();
 
-            CreateMap<TestCaseUpdateDTO, TestCase>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.ProblemId, opt => opt.Ignore());
+            _ = CreateMap<TestCaseUpdateDTO, TestCase>()
+                .ForMember(static dest => dest.Id, static opt => opt.Ignore())
+                .ForMember(static dest => dest.ProblemId, static opt => opt.Ignore());
         }
     }
 }
