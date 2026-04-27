@@ -92,7 +92,6 @@ builder.Services.AddTransient<IUserRepository, UserRespository>();
 builder.Services.AddTransient<ITestCaseRepository, TestCaseRepository>();
 builder.Services.AddTransient<ISubmissionResultsRepository, SubmissionResultRepository>();
 builder.Services.AddTransient<IUnitRepository, UnitRespository>();
-
 // --------- APP --------- //
 WebApplication app = builder.Build();
 
@@ -117,8 +116,14 @@ using (IServiceScope scope = app.Services.CreateScope())
             db.Database.Migrate();
             break;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[Error Real] {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[Inner] {ex.InnerException.Message}");
+            }
+
             if (attempt >= maxRetries)
             {
                 throw;

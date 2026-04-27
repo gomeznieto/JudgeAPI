@@ -2,17 +2,17 @@
 
 #nullable disable
 
-namespace JudgeAPI.Migrations
+namespace JudgeAPI.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class ProblemIsActivateProp : Migration
+    public partial class AddIsActiveToUser : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<bool>(
-                name: "isActivate",
-                table: "Problems",
+                name: "IsActive",
+                table: "AspNetUsers",
                 type: "bit",
                 nullable: false,
                 defaultValue: false);
@@ -22,8 +22,8 @@ namespace JudgeAPI.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "isActivate",
-                table: "Problems");
+                name: "IsActive",
+                table: "AspNetUsers");
         }
     }
 }

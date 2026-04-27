@@ -4,14 +4,14 @@ WORKDIR /src
 
 # Copiar y restaurar
 COPY RunnerApp/RunnerApp.csproj RunnerApp/
-COPY JudgeAPI/JudgeAPI.csproj JudgeAPI/
+COPY JudgeAPI.API/JudgeAPI.API.csproj JudgeAPI.API/
 RUN dotnet restore RunnerApp/RunnerApp.csproj
 
 # Copiar todo
 COPY . .
 
 # Limpiar los appsettings duplicados
-RUN rm -f /src/JudgeAPI/appsettings.json /src/JudgeAPI/appsettings.Development.json
+RUN rm -f /src/JudgeAPI.API/appsettings.json /src/JudgeAPI.API/appsettings.Development.json
 
 # Publicar binarios de RunnerApp
 WORKDIR /src/RunnerApp

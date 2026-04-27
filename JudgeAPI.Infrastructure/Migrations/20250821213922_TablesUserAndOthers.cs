@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace JudgeAPI.Migrations
+namespace JudgeAPI.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class TablesUserAndOthers : Migration

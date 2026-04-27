@@ -5,6 +5,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <NuGetAudit>false</NuGetAudit>
         <!-- <UserSecretsId>0e7e36ca-27b7-4730-9408-fd8e041f86ed</UserSecretsId> -->
         <!-- <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS> -->
         <!-- <DockerfileContext>.</DockerfileContext> -->
@@ -34,3 +35,4 @@
     </ItemGroup>
 
 </Project>
+

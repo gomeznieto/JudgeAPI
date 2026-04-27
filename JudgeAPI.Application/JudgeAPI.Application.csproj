@@ -1,17 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\JudgeAPI.Domain\JudgeAPI.Domain.csproj" />
-  </ItemGroup>
+        <ProjectReference Include="..\JudgeAPI.Domain\JudgeAPI.Domain.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="14.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="AutoMapper" Version="14.0.0" />
+    </ItemGroup>
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <NuGetAudit>false</NuGetAudit>
+    </PropertyGroup>
 
 </Project>

@@ -1,7 +1,7 @@
 services:
   api:
     build:
-      context: ./JudgeAPI
+      context: ./JudgeAPI.API
       dockerfile: Dockerfile.dev
     ports:
       - "5000:8080"
@@ -48,7 +48,7 @@ services:
 
   cpp-runner-image:
     build:
-      context: ./JudgeAPI/CppRunnerImage
+      context: ./JudgeAPI.API/CppRunnerImage
     image: judge-cpp-runner
     volumes:
       - ./jobs:/app/jobs

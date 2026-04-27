@@ -36,7 +36,12 @@ namespace JudgeAPI.Application.Features.Auth.Services
         // ---- REGISTER ---- //
         public async Task<TokenResponseDTO> RegisterAsync(UserCreateDTO dto)
         {
-            _ = await _identityService.FindByNameAsync(dto.Username) ?? throw new ConflictException("El nombre del usuario ya está en uso.");
+            UserDTO? userAlreadyExist = await _identityService.FindByNameAsync(dto.Username);
+
+            if (userAlreadyExist is not null)
+            {
+                throw new ConflictException("El nombre del usuario ya está en uso.");
+            }
 
             UserDTO newUser = new()
             {
@@ -88,8 +93,8 @@ namespace JudgeAPI.Application.Features.Auth.Services
         {
             UserDTO? user = await _identityService.FindByNameAsync(request.UserName) ?? throw new ConflictException("Usuario o contraseña incorrectos");
 
-            bool passwordValid = await _identityService.CheckPasswordAsync(user.Email, request.Password);
-
+            bool passwordValid = await _identityService.CheckPasswordAsync(user.UserName, request.Password);
+            Console.WriteLine($"PASS RESPONSE {passwordValid}");
             if (!passwordValid)
             {
                 throw new ConflictException("Usuario o contraseña incorrectos");

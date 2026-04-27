@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copiar el csproj y restaurar
-COPY JudgeAPI.csproj ./
+COPY JudgeAPI.API.csproj ./
 RUN dotnet restore
 
 # Copiar el resto del código
