@@ -83,7 +83,7 @@ namespace JudgeAPI.Application.Features.Users.Services
         }
 
         // -- RETORNAR USUARIO ACTUAL LOGEADO -- //
-        public async Task<UserPrivateDTO> GetCurrectUser(string id)
+        public async Task<UserPrivateDTO> GetCurrentUser(string id)
         {
             UserDTO? currentUser = await _identityService.FindByIdAsync(id) ?? throw new KeyNotFoundException("El usuario que busca no existe");
 
@@ -173,13 +173,11 @@ namespace JudgeAPI.Application.Features.Users.Services
         }
 
         // ---- UPDATE PASSWORD ---- //
-        public async Task<UserDTO> ChangePasswordAsync(ChangePasswordDTO dto, string userId)
+        public async Task<IdentityResultDTO> ChangePasswordAsync(ChangePasswordDTO dto, string userId)
         {
             UserDTO? user = await _identityService.FindByIdAsync(userId) ?? throw new KeyNotFoundException("El usuario que está bsucando no existe");
 
-            _ = await _identityService.ChangePasswordAsync(user.Id, dto);
-
-            return user;
+            return await _identityService.ChangePasswordAsync(user.Id, dto);
         }
 
         // ---- GET USERS ---- //
@@ -209,21 +207,5 @@ namespace JudgeAPI.Application.Features.Users.Services
                 Roles = [.. roles.Select(static r => new RoleDTO { Name = r })]
             };
         }
-
-        public Task<IdentityResultDTO> ChangePasswordAsync(ChangePasswordDTO changePasswordDTO)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<UserPrivateDTO> GetCurrectUser()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate)
-        {
-            throw new NotImplementedException();
-        }
     }
-
 }

@@ -43,7 +43,7 @@ namespace JudgeAPI.API.Mapping
                 .ForMember(static dest => dest.LastName, static opt => opt.Condition(static src => src.LastName != null))
                 .ForMember(static dest => dest.University, static opt => opt.Condition(static src => src.University != null));
 
-            _ = CreateMap<ApplicationUser, UserPrivateDTO>();
+            _ = CreateMap<UserDTO, UserPrivateDTO>();
             _ = CreateMap<ApplicationUser, UserPublicDTO>();
             _ = CreateMap<ApplicationUser, UserAdminDTO>();
 

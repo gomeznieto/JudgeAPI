@@ -5,10 +5,10 @@ namespace JudgeAPI.Application.Features.Users.Interfaces
 {
     public interface IUserService
     {
-        Task<IdentityResultDTO> ChangePasswordAsync(ChangePasswordDTO changePasswordDTO);
-        Task<UserPrivateDTO> GetCurrectUser();
+        Task<IdentityResultDTO> ChangePasswordAsync(ChangePasswordDTO dto, string userId);
+        Task<UserPrivateDTO> GetCurrentUser(string id);
         Task<UserBaseDTO> GetUserByIdAsync(string id, string currentId);
-        Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate);
+        Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate, string currentId);
         Task<UserPublicDTO> UpdateUserRoles(UserUpdateRolesDTO userUpdateRoles);
         Task<RolesResponseDTO> GetRolesAsync();
         Task<UsersResponseDTO> GetUsersAsync(int page = 1, int totalPerPage = 20);

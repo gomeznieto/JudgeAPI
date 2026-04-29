@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using JudgeAPI.Application.Common.Dtos;
 using JudgeAPI.Application.Features;
-using System.Security.Claims;
 using JudgeAPI.Application.Features.Users.Dtos;
 using JudgeAPI.Application.Features.Users.Interfaces;
-using JudgeAPI.Application.Common.Dtos;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace JudgeAPI.API.Controllers
 {
@@ -34,7 +34,14 @@ namespace JudgeAPI.API.Controllers
         [HttpGet("me")]
         public async Task<ActionResult<UserBaseDTO>> CurrentUser()
         {
-            return await _userService.GetCurrectUser();
+            string? currentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (currentId is null)
+            {
+                return BadRequest();
+            }
+
+            return await _userService.GetCurrentUser(currentId);
         }
 
         // -- UPDATE DE USUARIO -- //
@@ -48,7 +55,7 @@ namespace JudgeAPI.API.Controllers
                 throw new ArgumentException("No puede editar el profile de otro usuario");
             }
 
-            UserBaseDTO userResponse = await _userService.UpdateUser(userData);
+            UserBaseDTO userResponse = await _userService.UpdateUser(userData, userId);
             return Ok(userResponse);
         }
 
@@ -96,7 +103,14 @@ namespace JudgeAPI.API.Controllers
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
         {
-            IdentityResultDTO result = await _userService.ChangePasswordAsync(dto);
+            string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId is null)
+            {
+                return BadRequest();
+            }
+
+            IdentityResultDTO result = await _userService.ChangePasswordAsync(dto, userId);
 
             if (!result.Succeeded)
             {
