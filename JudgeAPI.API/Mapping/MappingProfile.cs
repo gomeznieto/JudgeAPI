@@ -1,14 +1,13 @@
 ﻿using AutoMapper;
-using JudgeAPI.Models.Unit;
-using JudgeAPI.Domain.Entities;
 using JudgeAPI.Application.Features.Auth.Dtos;
-
+using JudgeAPI.Application.Features.Problems.Dtos;
+using JudgeAPI.Application.Features.Submissions.Dtos;
 using JudgeAPI.Application.Features.TestCases.Dtos;
 using JudgeAPI.Application.Features.Units.Dtos;
-using JudgeAPI.Application.Features.Problems.Dtos;
 using JudgeAPI.Application.Features.Users.Dtos;
+using JudgeAPI.Domain.Entities;
 using JudgeAPI.Infrastructure.Identity;
-using JudgeAPI.Application.Features.Submissions.Dtos;
+using JudgeAPI.Models.Unit;
 
 namespace JudgeAPI.API.Mapping
 {
@@ -28,6 +27,7 @@ namespace JudgeAPI.API.Mapping
             _ = CreateMap<ProblemUpdateDTO, Problem>();
 
             // Users
+            _ = CreateMap<UserDTO, ApplicationUser>();
             _ = CreateMap<UserCreateDTO, ApplicationUser>();
             _ = CreateMap<UserPrivateDTO, ApplicationUser>();
             _ = CreateMap<UserUpdateDTO, ApplicationUser>()
@@ -47,7 +47,13 @@ namespace JudgeAPI.API.Mapping
             _ = CreateMap<ApplicationUser, UserPublicDTO>();
             _ = CreateMap<ApplicationUser, UserAdminDTO>();
 
-            _ = CreateMap<ApplicationUser, TokenResponseDTO>()
+            _ = CreateMap<ApplicationUser, TokenResponseDTO>() //TODO: Borrar cuando confirmemos que ya no se utiliza
+                .ForMember(static dest => dest.Email, static opt => opt.Condition(static src => src.Email != null))
+                .ForMember(static dest => dest.FirstName, static opt => opt.Condition(static src => src.FirstName != null))
+                .ForMember(static dest => dest.LastName, static opt => opt.Condition(static src => src.LastName != null))
+                .ForMember(static dest => dest.University, static opt => opt.Condition(static src => src.University != null));
+
+            _ = CreateMap<UserDTO, TokenResponseDTO>()
                 .ForMember(static dest => dest.Email, static opt => opt.Condition(static src => src.Email != null))
                 .ForMember(static dest => dest.FirstName, static opt => opt.Condition(static src => src.FirstName != null))
                 .ForMember(static dest => dest.LastName, static opt => opt.Condition(static src => src.LastName != null))

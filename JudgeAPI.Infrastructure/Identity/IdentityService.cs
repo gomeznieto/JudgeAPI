@@ -28,7 +28,7 @@ namespace JudgeAPI.Infrastructure.Identity
             ApplicationUser applicationUser = new()
             {
                 UserName = user.UserName,
-                Email = user.UserName,
+                Email = user.Email ?? null,
                 FirstName = user.FirstName ?? null,
                 LastName = user.LastName ?? null,
                 University = user.University ?? null
@@ -51,6 +51,7 @@ namespace JudgeAPI.Infrastructure.Identity
             {
                 Id = applicationUser.Id,
                 UserName = applicationUser.UserName!,
+                Email = applicationUser.Email,
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
                 University = applicationUser.University
@@ -72,15 +73,12 @@ namespace JudgeAPI.Infrastructure.Identity
         // ROLE
         public async Task AddRoleAsync(UserDTO user, string role)
         {
-            ApplicationUser applicationUser = new()
+            ApplicationUser? applicationUser = await _userManager.FindByNameAsync(user.UserName);
+
+            if (applicationUser is null)
             {
-                Id = user.Id,
-                UserName = user.UserName,
-                Email = user.UserName,
-                FirstName = user.FirstName ?? null,
-                LastName = user.LastName ?? null,
-                University = user.University ?? null
-            };
+                return;
+            }
 
             _ = await _userManager.AddToRoleAsync(applicationUser, role);
         }
@@ -99,15 +97,12 @@ namespace JudgeAPI.Infrastructure.Identity
 
         public async Task<IList<string>?> GetRoleAsync(UserDTO user)
         {
-            ApplicationUser applicationUser = new()
+            ApplicationUser? applicationUser = await _userManager.FindByNameAsync(user.UserName);
+
+            if (applicationUser is null)
             {
-                Id = user.Id,
-                UserName = user.UserName,
-                Email = user.UserName,
-                FirstName = user.FirstName ?? null,
-                LastName = user.LastName ?? null,
-                University = user.University ?? null
-            };
+                return [];
+            }
 
             return await _userManager.GetRolesAsync(applicationUser);
         }
@@ -125,6 +120,7 @@ namespace JudgeAPI.Infrastructure.Identity
             {
                 Id = applicationUser.Id,
                 UserName = applicationUser.UserName!,
+                Email = applicationUser.Email,
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
                 University = applicationUser.University
@@ -136,6 +132,7 @@ namespace JudgeAPI.Infrastructure.Identity
             ApplicationUser applicationUser = new()
             {
                 Id = id,
+                Email = user.Email ?? null,
                 FirstName = user.FirstName ?? null,
                 LastName = user.LastName ?? null,
                 University = user.University ?? null

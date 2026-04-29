@@ -13,22 +13,22 @@ public class TokenService(IOptions<JwtSettings> jwtSettings) : ITokenService
 
     public string GenerateToken(string userId, string email, IList<string> roles)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+        SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new List<Claim>
+        List<Claim> claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId),
-            new Claim(JwtRegisteredClaimNames.Email, email ?? ""),
-            new Claim(ClaimTypes.NameIdentifier, userId),
+            new (JwtRegisteredClaimNames.Sub, userId),
+            new (JwtRegisteredClaimNames.Email, email ?? ""),
+            new (ClaimTypes.NameIdentifier, userId),
         };
 
-        foreach (var role in roles)
+        foreach (string role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        var token = new JwtSecurityToken(
+        JwtSecurityToken token = new(
                 issuer: _jwtSettings.Issuer,
                 audience: _jwtSettings.Audience,
                 claims: claims,

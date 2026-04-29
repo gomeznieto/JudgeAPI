@@ -25,14 +25,6 @@ namespace JudgeAPI.Application.Features.Auth.Services
         private readonly IIdentityService _identityService = identityService;
         private readonly ISubmissionRepository _submissionRepository = submissionRepository;
 
-        /*
-           POST /logout
-           POST /refresh-token (si usás JWT con refresh tokens)
-           POST /confirm-email
-           POST /forgot-password
-           POST /reset-password
-    */
-
         // ---- REGISTER ---- //
         public async Task<TokenResponseDTO> RegisterAsync(UserCreateDTO dto)
         {
@@ -42,11 +34,12 @@ namespace JudgeAPI.Application.Features.Auth.Services
             {
                 throw new ConflictException("El nombre del usuario ya está en uso.");
             }
-
+        
+            // Creamos al usuario con los datos del DTO
             UserDTO newUser = new()
             {
                 UserName = dto.Username,
-                Email = dto.Username,
+                Email = dto.Email,
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 University = dto.Universidad,
@@ -74,7 +67,8 @@ namespace JudgeAPI.Application.Features.Auth.Services
             // Obtenemos Roles y token para colocar en la respuesta
             IList<string> roles = await _identityService.GetRoleAsync(newUser) ?? [];
 
-            string token = _tokenService.GenerateToken(newUser.Id, newUser.Email, roles!);
+            string? email = newUser?.Email;
+            string token = _tokenService.GenerateToken(newUser.Id, email, roles!);
 
             return new TokenResponseDTO
             {

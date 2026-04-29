@@ -1,3 +1,5 @@
+using JudgeAPI.Application.Features.Users.Dtos;
+
 namespace JudgeAPI.Application.Features.Users.Interfaces
 {
     public interface IUserRepository

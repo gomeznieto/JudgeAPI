@@ -1,9 +1,9 @@
-using JudgeAPI.Application.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using JudgeAPI.Application.Features.Users.Interfaces;
 using JudgeAPI.Infrastructure.Data;
 using JudgeAPI.Infrastructure.Identity;
+using JudgeAPI.Application.Features.Users.Dtos;
 
 namespace JudgeAPI.Infrastructure.Persistence.Repositories.Users
 {

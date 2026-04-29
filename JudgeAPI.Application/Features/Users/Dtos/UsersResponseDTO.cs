@@ -1,4 +1,4 @@
-using JudgeAPI.Application.Features;
+using JudgeAPI.Application.Features.Users.Dtos;
 
 public class UsersResponseDTO{
     public int TotalAmount { get; set; }
