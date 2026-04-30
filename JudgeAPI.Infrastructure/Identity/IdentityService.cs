@@ -17,9 +17,9 @@ namespace JudgeAPI.Infrastructure.Identity
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
 
         // USER METHODS
-        public async Task<bool> CheckPasswordAsync(string email, string password)
+        public async Task<bool> CheckPasswordAsync(string username, string password)
         {
-            ApplicationUser? user = await _userManager.FindByEmailAsync(email);
+            ApplicationUser? user = await _userManager.FindByNameAsync(username);
             return user is not null && await _userManager.CheckPasswordAsync(user, password);
         }
 
