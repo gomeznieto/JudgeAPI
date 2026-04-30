@@ -51,20 +51,18 @@ namespace JudgeAPI.Application.Features.Submissions.Services
         // --- GET SUBMISSION BY ID --- //
         public async Task<SubmissionResponseDTO> GetSubmissionAsync(int submissionId)
         {
-            var result = await _submissionRespository.GetSubmissionByIdAsync(submissionId); 
+            Submission? result = await _submissionRespository.GetSubmissionByIdAsync(submissionId) ?? throw new KeyNotFoundException($"No existe el resultado con el ID {submissionId}");
 
-            if (result == null)
-                throw new KeyNotFoundException($"No existe el resultado con el ID {submissionId}");
 
-            var submissionResponse = _mapper.Map<SubmissionResponseDTO>(result);
+            SubmissionResponseDTO submissionResponse = _mapper.Map<SubmissionResponseDTO>(result);
             submissionResponse.Verdict = result.Verdict;
 
             return submissionResponse;
         }
 
-        public async Task<bool> AnalyzeSubmissionAsync(int id)
+        public async Task<bool> AnalyzeSubmissionAsync(int submissionId)
         {
-            return await _submissionAnalyzerService.AnalyzeAsync(id);
+            return await _submissionAnalyzerService.AnalyzeAsync(submissionId);
         }
     }
 }
