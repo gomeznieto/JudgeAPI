@@ -36,7 +36,6 @@ namespace JudgeAPI.Infrastructure.Persistence.Repositories.Submissions
 
         public async Task<Submission?> GetLastSubmissionAsync(string userId, CancellationToken cancellationToken = default)
         {
-
             return await _dbContext.Submissions.Where(s => s.UserId == userId).OrderByDescending(s => s.SubmissionTime).FirstOrDefaultAsync(cancellationToken);
         }
 

@@ -25,15 +25,26 @@ namespace RunnerApp.Services
         private readonly IConfiguration _configuration = configuration;
         private const int MaxCompileErrorLines = 20;
 
-        // Leemos de redis cuando algo llega
+        /// <summary>
+        /// Ejecuta el bucle principal de procesamiento de envíos desde Redis.
+        /// </summary>
+        /// <remarks>
+        /// Este worker actúa como un consumidor de una cola de Redis ("submissions"). 
+        /// Implementa un patrón de sondeo (polling) con un delay de cortesía para evitar 
+        /// el consumo excesivo de CPU cuando la cola está vacía.
+        /// </remarks>
+        /// <param name="stoppingToken">Token que señaliza cuando el servicio debe detenerse de forma segura.</param>
+        /// <returns>Una tarea que representa la operación asincrónica de larga duración.</returns>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
                 RedisValue payload = await _redis.ListLeftPopAsync("submissions");
+                Console.WriteLine($"PAULOAD: {payload}");
 
                 if (payload.IsNullOrEmpty)
                 {
+                    Console.WriteLine("Payload Redis es nulo");
                     await Task.Delay(400, stoppingToken);
                     continue;
                 }
@@ -87,22 +98,23 @@ namespace RunnerApp.Services
                 .ToListAsync(stoppingToken);
 
             // Creamos la carpeta y agregar el archivo cpp
-            var guid = Guid.NewGuid().ToString("N");
-            var tempDirBase = Path.Combine(Directory.GetCurrentDirectory(), "jobs");
+            string guid = Guid.NewGuid().ToString("N");
+            string tempDirBase = Path.Combine(Directory.GetCurrentDirectory(), "jobs");
 
-            Directory.CreateDirectory(tempDirBase);
+            // Creamos el directorio base
+            _ = Directory.CreateDirectory(tempDirBase);
 
-            var jobsRoot = "/app/jobs";
+            string jobsRoot = "/app/jobs";
 
             // TEST
             Console.WriteLine($"[Runner] jobsRoot = {jobsRoot}");
 
-            var tempDir = Path.Combine(jobsRoot, $"job_{submission.Id}_{guid}");
-
-            Directory.CreateDirectory(tempDir);
+            // Creamos el directorion en donde vamos a guardar el cpp
+            string tempDir = Path.Combine(jobsRoot, $"job_{submission.Id}_{guid}");
+            _ = Directory.CreateDirectory(tempDir);
 
             // Permisos para escribir
-            var dirInfo = new DirectoryInfo(tempDir);
+            DirectoryInfo dirInfo = new(tempDir);
             dirInfo.Attributes &= ~FileAttributes.ReadOnly;
 
             var chmodResult = Process.Start(new ProcessStartInfo
@@ -116,58 +128,61 @@ namespace RunnerApp.Services
                     });
             chmodResult?.WaitForExit();
 
-            var src = Path.Combine(tempDir, "main.cpp");
+            string src = Path.Combine(tempDir, "main.cpp");
             File.WriteAllText(src, submission.Code);
 
             // Compilar
-            var std = _configuration["CompilerSettings:CppStandard"] ?? "c++17";
-            var flags = _configuration["CompilerSettings:Flags"] ?? "-Wall";
-            var compileCmd = $"ls -R /app/jobs && g++ -std=c++17 -Wall /app/jobs/job_{submission.Id}_{guid}/main.cpp -o /app/jobs/job_{submission.Id}_{guid}/a.out";
+            string std = _configuration["CompilerSettings:CppStandard"] ?? "c++17";
+            string flags = _configuration["CompilerSettings:Flags"] ?? "-Wall";
+            string compileCmd = $"ls -R /app/jobs && g++ -std=c++17 -Wall /app/jobs/job_{submission.Id}_{guid}/main.cpp -o /app/jobs/job_{submission.Id}_{guid}/a.out";
 
             Console.WriteLine($"[Runner] wrote source? {File.Exists(src)} size={new FileInfo(src).Length}");
             Console.WriteLine($"[Runner] dir exists: {Directory.Exists(tempDir)}");
-            foreach (var file in Directory.GetFiles(tempDir))
+            foreach (string file in Directory.GetFiles(tempDir))
             {
                 Console.WriteLine($"[Runner] - {file}");
             }
 
-            var compileRes = await RunDockerAsync(tempDir, compileCmd, captureStdErr: true, stoppingToken);
+            ProcessResultDTO compileRes = await RunDockerAsync(tempDir, compileCmd, captureStdErr: true, stoppingToken);
 
             // Si el ćodigo no compila, retornamos
             if (compileRes.ExitCode != 0)
             {
-                submission.Verdict = SubmissionVerdicts.CompilationError; 
-                var normalizedError = NormalizeStdErr(compileRes.StdErr); // Normalizamos el error para que saque los paths
+                submission.Verdict = SubmissionVerdicts.CompilationError;
+                string normalizedError = NormalizeStdErr(compileRes.StdErr); // Normalizamos el error para que saque los paths
                 submission.CompileError = TruncateError(normalizedError, MaxCompileErrorLines); // Si excede las 20 líneas, se queda con las más importantes
                 submission.CompileExitCode = compileRes.ExitCode;
 
-                await _appDbContext.SaveChangesAsync(stoppingToken);
+                _ = await _appDbContext.SaveChangesAsync(stoppingToken);
 
                 return;
             }
 
             // Ejecutar test
-            var toInsert = new List<SubmissionResult>();
-            var executionResults = new List<ExecutionResultDTO>(); 
+            List<SubmissionResult> toInsert = [];
+            List<ExecutionResultDTO> executionResults = [];
             bool hasTle = false;
             bool hasRe = false;
             bool hasMle = false;
             bool hasAllCorrect = true;
 
-            foreach (var tc in testCases)
+            foreach (TestCase tc in testCases)
             {
-                var inPath = Path.Combine(tempDir, "input.txt");
-                var outPath = Path.Combine(tempDir, "output.txt");
+                string inPath = Path.Combine(tempDir, "input.txt");
+                string outPath = Path.Combine(tempDir, "output.txt");
 
                 await File.WriteAllTextAsync(inPath, tc.InputData ?? string.Empty, stoppingToken);
-                if (File.Exists(outPath)) File.Delete(outPath);
+                if (File.Exists(outPath))
+                {
+                    File.Delete(outPath);
+                }
 
-                var runCmd = $"timeout {_cfg.PerTestTimeoutSeconds}s {tempDir}/a.out < {tempDir}/input.txt > {tempDir}/output.txt";
-                var sw = Stopwatch.StartNew();
-                var runRes = await RunDockerAsync(tempDir, runCmd, captureStdErr: true, stoppingToken);
+                string runCmd = $"timeout {_cfg.PerTestTimeoutSeconds}s {tempDir}/a.out < {tempDir}/input.txt > {tempDir}/output.txt";
+                Stopwatch sw = Stopwatch.StartNew();
+                ProcessResultDTO runRes = await RunDockerAsync(tempDir, runCmd, captureStdErr: true, stoppingToken);
                 sw.Stop();
 
-                var output = File.Exists(outPath) ? await File.ReadAllTextAsync(outPath, stoppingToken) : string.Empty;
+                string output = File.Exists(outPath) ? await File.ReadAllTextAsync(outPath, stoppingToken) : string.Empty;
 
                 // Analizamos el código
                 bool isTle = runRes.ExitCode == 124;
@@ -202,20 +217,24 @@ namespace RunnerApp.Services
 
 
                 // Determinamos el resultado del Test case
-                if(isTle){
+                if (isTle)
+                {
                     hasTle = true;
                     break;
                 }
 
-                if (isRe) {
+                if (isRe)
+                {
                     hasRe = true;
                 }
 
-                if(isMle) {
+                if (isMle)
+                {
                     hasMle = true;
                 }
 
-                if(!isCorrect){
+                if (!isCorrect)
+                {
                     hasAllCorrect = false;
                 }
             }
@@ -234,11 +253,23 @@ namespace RunnerApp.Services
             }
 
             if (toInsert.Count > 0)
+            {
                 _appDbContext.SubmissionResults.AddRange(toInsert);
+            }
 
-            await _appDbContext.SaveChangesAsync(stoppingToken);
+            _ = await _appDbContext.SaveChangesAsync(stoppingToken);
 
-            try { Directory.Delete(tempDir, true); } catch { /* ignore */ }
+            try
+            {
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to delete directory {tempDir}: {e.Message}");
+            }
         }
 
         private static string Normalize(string s)
@@ -283,12 +314,14 @@ namespace RunnerApp.Services
         private static string NormalizeStdErr(string stdErr)
         {
             if (string.IsNullOrWhiteSpace(stdErr))
+            {
                 return stdErr;
+            }
 
-            var lines = stdErr.Split('\n');
-            var sb = new StringBuilder();
+            string[] lines = stdErr.Split('\n');
+            StringBuilder sb = new();
 
-            foreach (var line in lines)
+            foreach (string line in lines)
             {
                 string normalizedLine = line;
 
