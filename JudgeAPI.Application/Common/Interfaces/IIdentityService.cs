@@ -7,7 +7,7 @@ namespace JudgeAPI.Application.Common.Interfaces
     public interface IIdentityService
     {
         // USERS
-        Task<bool> CheckPasswordAsync(string email, string password);
+        Task<bool> CheckPasswordAsync(string username, string password);
         Task<UserDTO?> FindByNameAsync(string username);
         Task<UserDTO?> FindByIdAsync(string id);
         Task<IdentityResultDTO> CreateUserAsync(UserDTO user, string password);
