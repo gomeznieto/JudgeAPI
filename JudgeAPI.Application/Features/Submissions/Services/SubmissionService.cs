@@ -25,13 +25,18 @@ namespace JudgeAPI.Application.Features.Submissions.Services
         public async Task<SubmissionResponseDTO> CreateSubmissionAsync(string userId, int problemId, SubmissionCreateDTO submissionCreateDTO)
         {
             Submission? lastSubmission = await _submissionRespository.GetLastSubmissionAsync(userId);
-            TimeSpan timeBetweenSubmissions = lastSubmission != null ? DateTime.UtcNow - lastSubmission.SubmissionTime : TimeSpan.Zero;
-            TimeSpan minTimeBetweenSubmissions = TimeSpan.FromMinutes(1);
 
-            if (timeBetweenSubmissions < minTimeBetweenSubmissions)
+            if (lastSubmission != null)
             {
-                throw new SubmissionTooSoonException($"Por favor, espere {minTimeBetweenSubmissions - timeBetweenSubmissions:hh\\:mm\\:ss} antes de envíar el código.");
+                TimeSpan timeBetweenSubmissions = DateTime.UtcNow - lastSubmission.SubmissionTime;
+                TimeSpan minTimeBetweenSubmissions = TimeSpan.FromMinutes(1);
+
+                if (timeBetweenSubmissions < minTimeBetweenSubmissions)
+                {
+                    throw new SubmissionTooSoonException($"Por favor, espere {minTimeBetweenSubmissions - timeBetweenSubmissions:hh\\:mm\\:ss} antes de envíar el código.");
+                }
             }
+
 
             Submission submission = _mapper.Map<Submission>(submissionCreateDTO);
             submission.UserId = userId;
