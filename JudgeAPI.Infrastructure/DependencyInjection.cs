@@ -49,7 +49,7 @@ namespace JudgeAPI.Infrastructure
         // REDIS
         public static IServiceCollection AddRedis(this IServiceCollection services, IConfiguration configuration)
         {
-            string? redisConnection = configuration["Redis:Connection"];
+            string? redisConnection = configuration["Redis:Connection"] ?? "redis:6379";
 
             _ = services.AddSingleton<IConnectionMultiplexer>(sp =>
                     ConnectionMultiplexer.Connect(redisConnection!));
