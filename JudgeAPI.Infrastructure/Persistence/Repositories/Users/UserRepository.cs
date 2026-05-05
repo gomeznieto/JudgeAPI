@@ -20,8 +20,10 @@ namespace JudgeAPI.Infrastructure.Persistence.Repositories.Users
                 {
                     u.Id,
                     u.UserName,
+                    u.Email,
                     u.FirstName,
                     u.LastName,
+                    u.University,
                     u.IsActive
                 });
 
@@ -45,8 +47,10 @@ namespace JudgeAPI.Infrastructure.Persistence.Repositories.Users
             {
                 Id = u.Id,
                 UserName = u.UserName!,
+                Email = u.Email,
                 FirstName = u.FirstName,
                 LastName = u.LastName,
+                University = u.University,
                 IsActive = u.IsActive,
                 Roles = [.. roles.Where(r => r.UserId == u.Id)
                     .Select(r => r.Name!)]

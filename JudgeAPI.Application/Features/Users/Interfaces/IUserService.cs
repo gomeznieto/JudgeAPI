@@ -9,7 +9,7 @@ namespace JudgeAPI.Application.Features.Users.Interfaces
         Task<UserPrivateDTO> GetCurrentUser(string id);
         Task<UserBaseDTO> GetUserByIdAsync(string id, string currentId);
         Task<UserPrivateDTO> UpdateUser(UserUpdateDTO userUpdate, string currentId);
-        Task<UserPublicDTO> UpdateUserRoles(UserUpdateRolesDTO userUpdateRoles);
+        Task<UserPublicDTO> UpdateUserRoles(Guid userId, UserUpdateRolesDTO userUpdateRoles);
         Task<RolesResponseDTO> GetRolesAsync();
         Task<UsersResponseDTO> GetUsersAsync(int page = 1, int totalPerPage = 20);
     }

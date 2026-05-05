@@ -20,6 +20,7 @@ namespace JudgeAPI.Infrastructure.Identity
         public async Task<bool> CheckPasswordAsync(string username, string password)
         {
             ApplicationUser? user = await _userManager.FindByNameAsync(username);
+            Console.WriteLine($"DESDE IdentityService {username} {password}");
             return user is not null && await _userManager.CheckPasswordAsync(user, password);
         }
 
@@ -129,14 +130,12 @@ namespace JudgeAPI.Infrastructure.Identity
 
         public async Task<IdentityResultDTO> UpdateUserAsync(UserUpdateDTO user, string id)
         {
-            ApplicationUser applicationUser = new()
-            {
-                Id = id,
-                Email = user.Email ?? null,
-                FirstName = user.FirstName ?? null,
-                LastName = user.LastName ?? null,
-                University = user.University ?? null
-            };
+            ApplicationUser? applicationUser = await _userManager.FindByIdAsync(id);
+
+            applicationUser.Email = user.Email ?? null;
+            applicationUser.FirstName = user.FirstName ?? null;
+            applicationUser.LastName = user.LastName ?? null;
+            applicationUser.University = user.University ?? null;
 
             IdentityResult result = await _userManager.UpdateAsync(applicationUser);
 

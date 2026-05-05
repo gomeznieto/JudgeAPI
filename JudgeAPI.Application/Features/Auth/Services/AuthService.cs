@@ -85,8 +85,8 @@ namespace JudgeAPI.Application.Features.Auth.Services
         // ---- LOGIN ---- //
         public async Task<TokenResponseDTO> LoginAsync(LoginRequestDTO request)
         {
-            UserDTO? user = await _identityService.FindByNameAsync(request.UserName) ?? throw new ConflictException("Usuario o contraseña incorrectos");
             Console.WriteLine($"{request.UserName} {request.Password}");
+            UserDTO? user = await _identityService.FindByNameAsync(request.UserName) ?? throw new ConflictException("Usuario o contraseña incorrectos");
             bool passwordValid = await _identityService.CheckPasswordAsync(user.UserName, request.Password);
 
             if (!passwordValid)

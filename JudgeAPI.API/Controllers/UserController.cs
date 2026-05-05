@@ -10,14 +10,16 @@ namespace JudgeAPI.API.Controllers
 {
 
     [ApiController]
-    [Route("api/users")]
+    [Route("api/[controller]")]
     [Authorize]
     public class UserController(IUserService userService) : ControllerBase
     {
         private readonly IUserService _userService = userService;
 
+        // GET: api/user/93e138af-c72b-4c52-8e60-c794abceefce
+        // Auth: no authentication required
         [HttpGet("{id:guid}", Name = "GetUserById")]
-        public async Task<ActionResult<UserBaseDTO>> GetUserById(string id)
+        public async Task<ActionResult<UserBaseDTO>> GetUserById(Guid id)
         {
             string? currentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -26,11 +28,12 @@ namespace JudgeAPI.API.Controllers
                 return BadRequest();
             }
 
-            UserBaseDTO user = await _userService.GetUserByIdAsync(id, currentId);
+            UserBaseDTO user = await _userService.GetUserByIdAsync(id.ToString(), currentId);
             return Ok(user);
         }
 
-        // -- RETORNA USUARIO ACTUAL LOGEADO -- //
+        // GET: api/user/me
+        // Auth: Bearer [Token]
         [HttpGet("me")]
         public async Task<ActionResult<UserBaseDTO>> CurrentUser()
         {
@@ -44,7 +47,15 @@ namespace JudgeAPI.API.Controllers
             return await _userService.GetCurrentUser(currentId);
         }
 
-        // -- UPDATE DE USUARIO -- //
+        // PUT: api/user/93e138af-c72b-4c52-8e60-c794abceefce
+        // Auth: Bearer [Token]
+        // Body (example):
+        // {
+        //   "FirstName": "John",
+        //   "Email": "john@test.com",
+        //   "LastName": "Doe",
+        //   "University": "MIT"
+        // }
         [HttpPut("{userid:guid}")]
         public async Task<ActionResult<UserBaseDTO>> UpdateUser(string userid, [FromBody] UserUpdateDTO userData)
         {
@@ -59,50 +70,61 @@ namespace JudgeAPI.API.Controllers
             return Ok(userResponse);
         }
 
-        // -- UPDATE ROL DE USUARIO -- //
+        // PUT: api/user/93e138af-c72b-4c52-8e60-c794abceefce/roles
+        // Auth: Bearer [Token]
+        // Body: 
+        // {
+        //   "Roles": ["Admin", "Student"]
+        // } 
         [HttpPut("{userid:guid}/roles")]
-        public async Task<ActionResult<UserBaseDTO>> UpdateUser(string userid, [FromBody] UserUpdateRolesDTO userUpdateRoles)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserBaseDTO>> UpdateUser(Guid userId, [FromBody] UserUpdateRolesDTO userUpdateRoles)
         {
-            if (userUpdateRoles is null)
+            if (userUpdateRoles is null || userUpdateRoles.Roles.Count == 0)
             {
                 return BadRequest();
             }
 
-            if (userUpdateRoles.Id != userid)
-            {
-                throw new ArgumentException("No puede modificar el rol de otro usuario");
-            }
-
-            UserBaseDTO userResponse = await _userService.UpdateUserRoles(userUpdateRoles);
+            UserBaseDTO userResponse = await _userService.UpdateUserRoles(userId, userUpdateRoles);
             return Ok(userResponse);
         }
 
-        // ---- GET ALL USERS ---- //
+        // GET: api/user/all
+        // Auth: Bearer [Token]
+        [Authorize(Roles = "Admin")]
         [HttpGet("all")]
         public async Task<UsersResponseDTO> GetAllUsers()
         {
             return await _userService.GetUsersAsync();
         }
 
-        // DAR DE BAJA USUARIOS: EN FRONT YA ESTA ARMADO
+        // DELETE: api/user/93e138af-c72b-4c52-8e60-c794abceefce
+        // Auth: Bearer [Token]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id:guid}")]
-        public IActionResult DeleteUser(int id)
+        public IActionResult DeleteUser(Guid id)
         {
+            // verificar Id de Admin
             // TODO: Baja lógica
+            // TODO: Armar servicio
             return Ok();
         }
 
-        // -- LISTADO DE ROLES --// 
+        // GET: api/user/roles
+        // Auth: Bearer [Token]
+        [Authorize(Roles = "Admin")]
         [HttpGet("roles")]
         public async Task<RolesResponseDTO> GetRoles()
         {
             return await _userService.GetRolesAsync();
         }
 
-        // -- CAMBIAR PASSWORD -- //
+        // PUT api/user/change-password
+        // Auth: Bearer [Token]
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
         {
+            // Claim del User que solicita el cambio
             string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (userId is null)
