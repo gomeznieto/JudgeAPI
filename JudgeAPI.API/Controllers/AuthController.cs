@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace JudgeAPI.API.Controllers
 {
     [ApiController]
-    [Route("api/auth")]
+    [Route("api/[controller]")]
     public class AuthController(
             IAuthService authService
             )
@@ -15,6 +15,8 @@ namespace JudgeAPI.API.Controllers
     {
         private readonly IAuthService _authService = authService;
 
+        // POST: api/auth/register
+        // Auth: no authentication required
         [HttpPost("register")]
         public async Task<ActionResult<UserBaseDTO>> Register(UserCreateDTO dto)
         {
@@ -22,6 +24,13 @@ namespace JudgeAPI.API.Controllers
             return Ok(responseDTO);
         }
 
+        // POST: api/auth/login
+        // Auth: no authentication required
+        // Example JSON request body:
+        // {
+        //     "email": "user@example.com",
+        //     "password": "securepassword123"
+        // }
         [HttpPost("login")]
         public async Task<ActionResult<TokenResponseDTO>> Login([FromBody] LoginRequestDTO request)
         {
@@ -29,6 +38,7 @@ namespace JudgeAPI.API.Controllers
             return Ok(tokenResponse);
         }
 
+        // TODO: Implementar los métodos que faltan
         [HttpPost("logout")]
         public IActionResult Logout()
         {
