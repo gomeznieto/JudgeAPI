@@ -30,12 +30,11 @@ namespace JudgeAPI.API.Mapping
             _ = CreateMap<UserDTO, ApplicationUser>();
             _ = CreateMap<UserCreateDTO, ApplicationUser>();
             _ = CreateMap<UserPrivateDTO, ApplicationUser>();
-            _ = CreateMap<UserUpdateDTO, ApplicationUser>()
+            _ = CreateMap<UserUpdateDTO, UserDTO>()
                 .ForMember(static dest => dest.Email, static opt => opt.Condition(static src => src.Email != null))
                 .ForMember(static dest => dest.FirstName, static opt => opt.Condition(static src => src.FirstName != null))
                 .ForMember(static dest => dest.LastName, static opt => opt.Condition(static src => src.LastName != null))
-                .ForMember(static dest => dest.University, static opt => opt.Condition(static src => src.University != null))
-                .ForMember(static dest => dest.PasswordHash, static opt => opt.Ignore());
+                .ForMember(static dest => dest.University, static opt => opt.Condition(static src => src.University != null));
 
             _ = CreateMap<UserUpdateDTO, UserPrivateDTO>()
                 .ForMember(static dest => dest.Email, static opt => opt.Condition(static src => src.Email != null))
