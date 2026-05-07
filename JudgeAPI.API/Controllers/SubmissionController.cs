@@ -11,27 +11,33 @@ namespace JudgeAPI.API.Controllers
     [Route("api/problems/{problemId}/submission")]
     [Authorize]
     public class SubmissionController(
-            IHttpContextAccessor httpContextAccessor,
             ISubmissionService submissionService
             )
  : ControllerBase
     {
-        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
         private readonly ISubmissionService _submissionService = submissionService;
 
-        // --- POST SUBMISSION ---
+        // --- POST SUBMISSION PROBLEM ---
+        // POST: api/problems/{problemId}/submission
+        // Auth: Bearer [Token]
+        // Body {
+        // "code": "#include <iostream>\nint main(){ int a, b; std::cin>>a>>b; std::cout<<a+b; return 0;",
+        // "language": "C++"
+        // }
         [HttpPost]
         public async Task<ActionResult<SubmissionResponseDTO>> Submit(int problemId, SubmissionCreateDTO create)
         {
             try
             {
-                string? userId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                // Varificamos al usuario que nos manda el request
+                string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
                 if (string.IsNullOrEmpty(userId))
                 {
                     return Unauthorized();
                 }
 
+                // Creamos Submission
                 SubmissionResponseDTO submissionResponse = await _submissionService.CreateSubmissionAsync(userId, problemId, create);
 
                 if (submissionResponse == null)
