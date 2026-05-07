@@ -49,10 +49,15 @@ namespace JudgeAPI.Application.Features.Submissions.Services
         }
 
         // --- GET SUBMISSION BY ID --- //
-        public async Task<SubmissionResponseDTO> GetSubmissionAsync(int submissionId)
+        public async Task<SubmissionResponseDTO?> GetSubmissionAsync(string userId, int submissionId)
         {
             Submission? result = await _submissionRespository.GetSubmissionByIdAsync(submissionId) ?? throw new KeyNotFoundException($"No existe el resultado con el ID {submissionId}");
 
+            // Impedimos que otros usuarios puedan ver Submission que no sea propios
+            if (result.UserId != userId)
+            {
+                throw new UnauthorizedAccessException("Usted no tiene permisos para ver los resultados de este problema.");
+            }
 
             SubmissionResponseDTO submissionResponse = _mapper.Map<SubmissionResponseDTO>(result);
             submissionResponse.Verdict = result.Verdict;
@@ -60,6 +65,7 @@ namespace JudgeAPI.Application.Features.Submissions.Services
             return submissionResponse;
         }
 
+        // -- ENVIAMOS EL SUBMISSION A REDIS --- //
         public async Task<bool> AnalyzeSubmissionAsync(int submissionId)
         {
             return await _submissionAnalyzerService.AnalyzeAsync(submissionId);

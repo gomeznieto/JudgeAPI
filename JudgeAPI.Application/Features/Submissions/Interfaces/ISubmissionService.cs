@@ -6,6 +6,6 @@ namespace JudgeAPI.Application.Features.Submissions.Interfaces
     {
         Task<bool> AnalyzeSubmissionAsync(int submissionId);
         Task<SubmissionResponseDTO> CreateSubmissionAsync(string userId, int problemId, SubmissionCreateDTO submissionCreateDTO);
-        Task<SubmissionResponseDTO> GetSubmissionAsync(int submissionId);
+        Task<SubmissionResponseDTO?> GetSubmissionAsync(string userId, int submissionId);
     }
 }

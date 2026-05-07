@@ -1,5 +1,4 @@
 using JudgeAPI.Application.Common.Dtos;
-using JudgeAPI.Application.Features;
 using JudgeAPI.Application.Features.Users.Dtos;
 
 namespace JudgeAPI.Application.Common.Interfaces

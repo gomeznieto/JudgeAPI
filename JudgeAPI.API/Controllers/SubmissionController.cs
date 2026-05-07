@@ -56,17 +56,20 @@ namespace JudgeAPI.API.Controllers
         }
 
         // --- GET SUBMISSION BY PROBLEM AND ID
+        // GET: api/problems/{problemId}/submission/{submissionId}
+        // Auth: Bearer [Token]
         [HttpGet("{submissionId:int}")]
         public async Task<ActionResult<SubmissionResponseDTO>> GetSubmission(int submissionId)
         {
-            SubmissionResponseDTO response = await _submissionService.GetSubmissionAsync(submissionId);
+            string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (response is null)
+            if (userId is null)
             {
-                return NotFound();
+                return Unauthorized();
             }
 
-            return Ok(response.Results);
+            SubmissionResponseDTO? response = await _submissionService.GetSubmissionAsync(userId, submissionId);
+            return response != null ? Ok(response.Results) : NotFound();
         }
 
     }
