@@ -1,6 +1,5 @@
 using JudgeAPI.Application.Common.Dtos;
 using JudgeAPI.Application.Common.Interfaces;
-using JudgeAPI.Application.Features;
 using JudgeAPI.Application.Features.Users.Dtos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

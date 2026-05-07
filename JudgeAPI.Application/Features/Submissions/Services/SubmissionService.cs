@@ -24,9 +24,10 @@ namespace JudgeAPI.Application.Features.Submissions.Services
         // --- CREATE SUBMISSION --- //
         public async Task<SubmissionResponseDTO> CreateSubmissionAsync(string userId, int problemId, SubmissionCreateDTO submissionCreateDTO)
         {
+            //Validamos que el tiempo entre la última sumisión y la actual sea correcta
             Submission? lastSubmission = await _submissionRespository.GetLastSubmissionAsync(userId);
 
-            if (lastSubmission != null)
+            if (lastSubmission != null) // Si existe calculamos el tiempo
             {
                 TimeSpan timeBetweenSubmissions = DateTime.UtcNow - lastSubmission.SubmissionTime;
                 TimeSpan minTimeBetweenSubmissions = TimeSpan.FromMinutes(1);
@@ -37,7 +38,7 @@ namespace JudgeAPI.Application.Features.Submissions.Services
                 }
             }
 
-
+            // Creamo el objeto para guardar
             Submission submission = _mapper.Map<Submission>(submissionCreateDTO);
             submission.UserId = userId;
             submission.ProblemId = problemId;
