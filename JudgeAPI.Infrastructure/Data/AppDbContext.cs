@@ -29,6 +29,7 @@ namespace JudgeAPI.Infrastructure.Data
         public required DbSet<TestCase> TestCases { get; set; }
         public required DbSet<Submission> Submissions { get; set; }
         public required DbSet<SubmissionResult> SubmissionResults { get; set; }
+        public required DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
     }
 
 }

@@ -11,6 +11,7 @@ namespace JudgeAPI.API.Extensions
         {
             JwtSettings? jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
 
+            // Pasamo los datos de AppSetting a Configure para usarlos luegos con IOptions en Infrastructure
             _ = services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
 
             _ = services.AddAuthentication(options =>

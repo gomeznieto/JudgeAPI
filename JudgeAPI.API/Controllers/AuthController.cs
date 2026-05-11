@@ -3,6 +3,7 @@ using JudgeAPI.Application.Features.Auth.Dtos;
 using JudgeAPI.Application.Features.Auth.Iterfaces;
 using JudgeAPI.Application.Features.Users.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace JudgeAPI.API.Controllers
 {
@@ -45,10 +46,12 @@ namespace JudgeAPI.API.Controllers
             return Ok();
         }
 
+        [AllowAnonymous]
         [HttpPost("refresh-token")]
-        public IActionResult RefreshToken()
+        public async Task<IActionResult> RefreshToken(TokenRequestDTO dto)
         {
-            return Ok();
+            TokenResponseDTO result = await _authService.RefreshTokenAsync(dto);
+            return Ok(result);
         }
 
         [HttpPost("confirm-email")]

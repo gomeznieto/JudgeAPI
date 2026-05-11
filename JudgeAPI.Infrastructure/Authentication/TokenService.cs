@@ -4,6 +4,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using JudgeAPI.Application.Features.Auth.Iterfaces;
+using System.Security.Cryptography;
+
 
 namespace JudgeAPI.Infrastructure.Authentication;
 

@@ -26,6 +26,7 @@ using JudgeAPI.Infrastructure.Persistence.Repositories.SubmissionResults;
 using JudgeAPI.Infrastructure.Persistence.Repositories.Submissions;
 using JudgeAPI.Infrastructure.Persistence.Repositories.TestCases;
 using JudgeAPI.Infrastructure.Persistence.Repositories.Users;
+using JudgeAPI.Infrastructure.Persistence.Repositories.RefreshToken;
 using JudgeAPI.Infrastructure.Seed;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -91,6 +92,7 @@ builder.Services.AddTransient<IProblemRepository, ProblemRepository>();
 builder.Services.AddTransient<IUserRepository, UserRespository>();
 builder.Services.AddTransient<ITestCaseRepository, TestCaseRepository>();
 builder.Services.AddTransient<ISubmissionResultsRepository, SubmissionResultRepository>();
+builder.Services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddTransient<IUnitRepository, UnitRespository>();
 // --------- APP --------- //
 WebApplication app = builder.Build();

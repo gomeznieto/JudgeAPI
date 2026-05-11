@@ -10,6 +10,7 @@ using JudgeAPI.Domain.Constants;
 using JudgeAPI.Application.Common.Exceptions;
 using JudgeAPI.Application.Common.Dtos;
 using JudgeAPI.Application.Features.Users.Dtos;
+using System.Security.Claims;
 
 namespace JudgeAPI.Application.Features.Auth.Services
 {
@@ -17,13 +18,15 @@ namespace JudgeAPI.Application.Features.Auth.Services
             IMapper mapper,
             ITokenService tokenService,
             IIdentityService identityService,
-            ISubmissionRepository submissionRepository
-                ) : IAuthService
+            ISubmissionRepository submissionRepository,
+            IRefreshTokenRepository refreshTokenRepository
+            ) : IAuthService
     {
         private readonly IMapper _mapper = mapper;
         private readonly ITokenService _tokenService = tokenService;
         private readonly IIdentityService _identityService = identityService;
         private readonly ISubmissionRepository _submissionRepository = submissionRepository;
+        private readonly IRefreshTokenRepository _refreshTokenRepository = refreshTokenRepository;
 
         // ---- REGISTER ---- //
         public async Task<TokenResponseDTO> RegisterAsync(UserCreateDTO dto)
@@ -34,7 +37,7 @@ namespace JudgeAPI.Application.Features.Auth.Services
             {
                 throw new ConflictException("El nombre del usuario ya está en uso.");
             }
-        
+
             // Creamos al usuario con los datos del DTO
             UserDTO newUser = new()
             {
