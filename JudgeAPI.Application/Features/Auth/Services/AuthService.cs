@@ -70,17 +70,17 @@ namespace JudgeAPI.Application.Features.Auth.Services
             // Obtenemos Roles y token para colocar en la respuesta
             IList<string> roles = await _identityService.GetRoleAsync(newUser) ?? [];
 
-            string? email = newUser?.Email;
-            string token = _tokenService.GenerateToken(newUser.Id, email, roles!);
+            string token = _tokenService.GenerateToken(newUser.Id, newUser.UserName, roles!);
 
             return new TokenResponseDTO
             {
                 Token = token,
                 UserId = newUser.Id!,
-                UserName = newUser.UserName ?? "",
+                UserName = newUser.UserName!,
                 FirstName = newUser.FirstName,
                 LastName = newUser.LastName,
                 Email = newUser.Email,
+                University = newUser.University,
                 Roles = [.. roles]
             };
         }
@@ -111,6 +111,29 @@ namespace JudgeAPI.Application.Features.Auth.Services
 
             return tokenResponse;
         }
+
+        // ---- REFRESH TOKEN ---- //
+        public async Task<TokenResponseDTO> RefreshTokenAsync(TokenRequestDTO dto)
+        {
+            // Obtenemos los Claims
+            IEnumerable<Claim> userClaims = _tokenService.GetPrincipalFromExpiredToken(dto.Token).Claims;
+            string? userId = userClaims.FirstOrDefault(static c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new Exception("No se pudo obtener la información del usuario.");
+            }
+
+            UserDTO user = await _identityService.FindByIdAsync(userId) ?? throw new Exception("Usuario no encontrado");
+
+            // RefreshToken
+            string parseToken = _tokenService.GetHashToken(dto.RefreshToken);
+
+            UserRefreshToken? userRefreshToken = await _refreshTokenRepository.GetByUserIdAndHashAsync(userId, parseToken) ?? throw new UnauthorizedAccessException("Error: ID de usuario o token de actualización no válidos.");
+
+            // Validamos que la expiración no esté vencida TODO: Continuar
+        }
+
     }
 
 }

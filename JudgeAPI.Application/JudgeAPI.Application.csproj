@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
+    <ItemGroup>
         <ProjectReference Include="..\JudgeAPI.Domain\JudgeAPI.Domain.csproj" />
     </ItemGroup>
 
