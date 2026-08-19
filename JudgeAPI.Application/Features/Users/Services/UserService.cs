@@ -202,7 +202,7 @@ namespace JudgeAPI.Application.Features.Users.Services
         // ---- GET ROLES ---- //
         public async Task<RolesResponseDTO> GetRolesAsync()
         {
-            IList<string> roles = await _identityService.GetAllRolesAsync();
+            IList<string?> roles = await _identityService.GetAllRolesAsync() ?? throw new NotFoundException("No se encontraron roles en el sistema");
 
             return new RolesResponseDTO
             {

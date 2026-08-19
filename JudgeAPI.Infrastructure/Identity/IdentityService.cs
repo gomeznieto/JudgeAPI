@@ -8,12 +8,12 @@ namespace JudgeAPI.Infrastructure.Identity
 {
     public sealed class IdentityService(
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager
+            RoleManager<IdentityRole<Guid>> roleManager
             )
         : IIdentityService
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
-        private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+        private readonly RoleManager<IdentityRole<Guid>> _roleManager = roleManager;
 
         // USER METHODS
         public async Task<bool> CheckPasswordAsync(string username, string password)
@@ -49,7 +49,7 @@ namespace JudgeAPI.Infrastructure.Identity
 
             return applicationUser is not null ? new UserDTO
             {
-                Id = applicationUser.Id,
+                Id = applicationUser.Id.ToString(),
                 UserName = applicationUser.UserName!,
                 Email = applicationUser.Email,
                 FirstName = applicationUser.FirstName,
@@ -85,7 +85,7 @@ namespace JudgeAPI.Infrastructure.Identity
 
         public async Task<IdentityResultDTO> CreateRoleAsync(string role)
         {
-            IdentityResult result = await _roleManager.CreateAsync(new IdentityRole()
+            IdentityResult result = await _roleManager.CreateAsync(new IdentityRole<Guid>()
             { Name = role });
 
             return new IdentityResultDTO
@@ -118,7 +118,7 @@ namespace JudgeAPI.Infrastructure.Identity
 
             return applicationUser is not null ? new UserDTO
             {
-                Id = applicationUser.Id,
+                Id = applicationUser.Id.ToString(),
                 UserName = applicationUser.UserName!,
                 Email = applicationUser.Email,
                 FirstName = applicationUser.FirstName,

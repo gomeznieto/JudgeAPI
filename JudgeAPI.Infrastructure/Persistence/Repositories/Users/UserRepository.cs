@@ -34,18 +34,18 @@ namespace JudgeAPI.Infrastructure.Persistence.Repositories.Users
                 .Take(totalPerPage)
                 .ToListAsync();
 
-            List<string> usersId = [.. users.Select(u => u.Id)];
+            List<string> usersId = [.. users.Select(u => u.Id.ToString())];
 
             var roles = await (from ur in _dbContext.UserRoles
                                join r in _dbContext.Roles on ur.RoleId equals r.Id
-                               where usersId.Contains(ur.UserId)
+                               where usersId.Contains(ur.UserId.ToString())
                                select new { ur.UserId, r.Name }
                     )
                 .ToListAsync();
 
             List<UserDTO> result = [.. users.Select(u => new UserDTO
             {
-                Id = u.Id,
+                Id = u.Id.ToString(),
                 UserName = u.UserName!,
                 Email = u.Email,
                 FirstName = u.FirstName,

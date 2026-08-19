@@ -1,10 +1,10 @@
 services:
   api:
     build:
-      context: ./JudgeAPI
+      context: .
+      dockerfile: JudgeAPI.API/Dockerfile
     ports:
       - "5500:8080"
-    command: dotnet run
     depends_on:
       - db
     env_file:

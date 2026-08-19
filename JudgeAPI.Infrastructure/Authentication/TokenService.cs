@@ -49,6 +49,7 @@ public class TokenService(IOptions<JwtSettings> jwtSettings) : ITokenService
         return Convert.ToBase64String(randomNumber);
     }
 
+    // Hash the refresh token using SHA256
     public string GetHashToken(string token)
     {
         using SHA256 sha256 = SHA256.Create();
