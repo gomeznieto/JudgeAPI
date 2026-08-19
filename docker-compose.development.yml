@@ -1,25 +1,10 @@
 services:
-  api:
-    build:
-      context: ./JudgeAPI.API
-      dockerfile: Dockerfile.dev
-    ports:
-      - "5000:8080"
-    volumes:
-      - ./JudgeAPI:/app
-    env_file:
-      - .env.local
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "1"
-    depends_on:
-      - db
-      - redis
-
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
     ports: ["14330:1433"]
+    env_file:
+      - .env.dev
     environment:
-      SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
     volumes:
       - sqlvolume:/var/opt/mssql
@@ -41,7 +26,7 @@ services:
       - ./jobs:/app/jobs
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
-      - .env.local
+      - .env.dev
     depends_on:
       - redis
       - db

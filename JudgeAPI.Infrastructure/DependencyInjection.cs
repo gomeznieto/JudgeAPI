@@ -18,7 +18,7 @@ namespace JudgeAPI.Infrastructure
         public static IServiceCollection AddInfrastructure(this IServiceCollection service, IConfiguration configuration)
         {
             _ = service.AddPersistence(configuration);
-            _ = service.AddTokenService();
+            _ = service.AddAuth();
             _ = service.AddRedis(configuration);
             _ = service.AddUnitOfWork();
             _ = service.Configure<SubmissionOptions>(configuration.GetSection(SubmissionOptions.SectionName));
@@ -39,7 +39,7 @@ namespace JudgeAPI.Infrastructure
         }
 
         // TOKEN
-        private static IServiceCollection AddTokenService(this IServiceCollection service)
+        private static IServiceCollection AddAuth(this IServiceCollection service)
         {
             _ = service.AddScoped<ITokenService, TokenService>();
 
@@ -58,6 +58,7 @@ namespace JudgeAPI.Infrastructure
 
             return services;
         }
+
 
         // UNITS OF WORK
         public static IServiceCollection AddUnitOfWork(this IServiceCollection services)

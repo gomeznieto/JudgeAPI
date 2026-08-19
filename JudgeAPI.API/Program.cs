@@ -31,7 +31,23 @@ using JudgeAPI.Infrastructure.Seed;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-Env.Load();
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+if (string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase))
+{
+    DotNetEnv.Env.Load("../.env.dev");
+    var testDb = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+    var testAdmin = Environment.GetEnvironmentVariable("ADMIN_MAIL");
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine("[DEBUG .ENV] Archivo .env.dev cargado.");
+    Console.WriteLine($"[DEBUG .ENV] ADMIN_MAIL: {testAdmin}");
+    Console.WriteLine($"[DEBUG .ENV] DefaultConnection: {testDb}");
+    Console.ResetColor();
+}
+else
+{
+    DotNetEnv.Env.Load("../.env");
+}
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -143,13 +159,13 @@ using (IServiceScope scope = app.Services.CreateScope())
 // INICIAMOS CARGA A LA DB
 using (IServiceScope scope = app.Services.CreateScope())
 {
-    // ROLES
-    RoleManager<IdentityRole> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    await RoleSeeder.SeedRoleAsync(roleManager);
+  // ROLES
+  RoleManager<IdentityRole<Guid>> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+  await RoleSeeder.SeedRoleAsync(roleManager);
 
-    // ADMIN
-    UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    await UserSeeder.SeedAdminAsync(userManager);
+  // ADMIN
+  UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+  await UserSeeder.SeedAdminAsync(userManager);
 }
 
 app.UseMiddleware<ExceptionMiddleware>();

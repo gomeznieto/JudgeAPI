@@ -17,7 +17,6 @@ namespace JudgeAPI.API.Controllers
         private readonly IUserService _userService = userService;
 
         // GET: api/user/93e138af-c72b-4c52-8e60-c794abceefce
-        // Auth: no authentication required
         [HttpGet("{id:guid}", Name = "GetUserById")]
         public async Task<ActionResult<UserBaseDTO>> GetUserById(Guid id)
         {

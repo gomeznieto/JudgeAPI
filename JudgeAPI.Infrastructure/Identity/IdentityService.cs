@@ -35,6 +35,12 @@ namespace JudgeAPI.Infrastructure.Identity
             };
 
             IdentityResult result = await _userManager.CreateAsync(applicationUser, password);
+           
+            if (result.Succeeded)
+            {
+              user.Id = applicationUser.Id.ToString();
+              user.IsActive = true;
+            }
 
             return new IdentityResultDTO
             {

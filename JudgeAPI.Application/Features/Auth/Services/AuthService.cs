@@ -73,17 +73,33 @@ namespace JudgeAPI.Application.Features.Auth.Services
       IList<string> roles = await _identityService.GetRoleAsync(newUser) ?? [];
 
       string token = _tokenService.GenerateToken(newUser.Id, newUser.UserName, roles!);
+      string refreshToken = _tokenService.GenerateRefreshToken();
+      
+      Console.ForegroundColor = ConsoleColor.Green;
+      Console.WriteLine($"[AuthService] Token generado para el usuario {newUser.Id}: {token
+}");
+      UserRefreshToken userRefreshToken = new()
+      {
+        UserId = Guid.Parse(newUser.Id),
+        TokenHash = _tokenService.GetHashToken(refreshToken),
+        ExpiresAt = DateTime.UtcNow.AddDays(7),
+        IsRevoked = false
+      };
+
+      _refreshTokenRepository.Add(userRefreshToken);
+      await _unitOfWork.SaveChangesAsync();
 
       return new TokenResponseDTO
       {
         Token = token,
+        RefreshToken = refreshToken,
         UserId = newUser.Id!,
         UserName = newUser.UserName!,
         FirstName = newUser.FirstName,
         LastName = newUser.LastName,
         Email = newUser.Email,
         University = newUser.University,
-        Roles = [.. roles]
+        Roles = [.. roles] 
       };
     }
 
@@ -104,15 +120,7 @@ namespace JudgeAPI.Application.Features.Auth.Services
       string refreshToken = _tokenService.GenerateRefreshToken();
       List<Submission> submissionList = await _submissionRepository.GetAllByUserIdAsync(user.Id);
 
-      // Mapeamos el usuario y las submissions a DTOs
-      TokenResponseDTO tokenResponse = _mapper.Map<TokenResponseDTO>(user);
-      tokenResponse.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList);
-      tokenResponse.Token = token;
-      tokenResponse.RefreshToken = refreshToken;
-      tokenResponse.UserId = user.Id;
-      tokenResponse.Roles = [.. roles];
-
-      // Guardamos el token de actualización en la base de datos
+            // Guardamos el token de actualización en la base de datos
       UserRefreshToken userRefreshToken = new()
       {
         UserId = Guid.Parse(user.Id),
@@ -121,8 +129,17 @@ namespace JudgeAPI.Application.Features.Auth.Services
         IsRevoked = false
       };
 
-      await _refreshTokenRepository.AddAsync(userRefreshToken);
+      _refreshTokenRepository.Add(userRefreshToken);
+
       await _unitOfWork.SaveChangesAsync();
+
+      // Mapeamos el usuario y las submissions a DTOs
+      TokenResponseDTO tokenResponse = _mapper.Map<TokenResponseDTO>(user);
+      tokenResponse.Submissions = _mapper.Map<List<SubmissionResponseDTO>>(submissionList);
+      tokenResponse.Token = token;
+      tokenResponse.RefreshToken = refreshToken;
+      tokenResponse.UserId = user.Id;
+      tokenResponse.Roles = [.. roles];
 
       return tokenResponse;
     }
@@ -160,7 +177,7 @@ namespace JudgeAPI.Application.Features.Auth.Services
       userRefreshToken.ExpiresAt = DateTime.UtcNow;
       userRefreshToken.IsRevoked = true;
 
-      await _refreshTokenRepository.UpdateAsync(userRefreshToken);
+      _refreshTokenRepository.Update(userRefreshToken);
 
       // Generamos un nuevo token y refresh token
       IList<string> roles = await _identityService.GetRoleAsync(user) ?? [];
@@ -170,7 +187,7 @@ namespace JudgeAPI.Application.Features.Auth.Services
       // Actualizamos el token de actualización en la base de datos
       userRefreshToken.TokenHash = _tokenService.GetHashToken(refreshToken);
       userRefreshToken.ExpiresAt = DateTime.UtcNow.AddDays(7);
-      await _refreshTokenRepository.AddAsync(userRefreshToken);
+      _refreshTokenRepository.Add(userRefreshToken);
 
       await _unitOfWork.SaveChangesAsync();
 

@@ -5,7 +5,7 @@ namespace JudgeAPI.Infrastructure.Seed
 {
     public static class RoleSeeder
     {
-        public static async Task SeedRoleAsync(RoleManager<IdentityRole> roleManager)
+        public static async Task SeedRoleAsync(RoleManager<IdentityRole<Guid>> roleManager)
         {
             string[] roleNames = [Roles.Admin, Roles.Student, Roles.Moderator];
 
@@ -13,7 +13,7 @@ namespace JudgeAPI.Infrastructure.Seed
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
-                    _ = await roleManager.CreateAsync(new IdentityRole(roleName));
+                    _ = await roleManager.CreateAsync(new IdentityRole<Guid>(roleName));
                 }
             }
         }

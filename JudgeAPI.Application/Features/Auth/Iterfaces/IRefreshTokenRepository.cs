@@ -5,7 +5,7 @@ namespace JudgeAPI.Application.Features.Auth.Iterfaces
     public interface IRefreshTokenRepository 
     {
         Task<UserRefreshToken?> GetByUserIdAndHashAsync(string userId, string tokenHash);
-        Task AddAsync(UserRefreshToken refreshToken);
-        Task UpdateAsync(UserRefreshToken refreshToken);
+        void Add(UserRefreshToken refreshToken);
+        void Update(UserRefreshToken refreshToken);
     }
 }

@@ -58,6 +58,7 @@ namespace JudgeAPI.Application.Features.Users.Services
             if (currentUser.Id == id)
             {
                 UserPrivateDTO privateUserResponse = _mapper.Map<UserPrivateDTO>(currentUser);
+                privateUserResponse.UserId = currentUser.Id;
                 privateUserResponse.Roles = [.. searchUserRoles];
                 privateUserResponse.Submissions = submissionResponseDTO;
                 return privateUserResponse;
@@ -73,6 +74,7 @@ namespace JudgeAPI.Application.Features.Users.Services
                 }
 
                 UserAdminDTO adminUserResponse = _mapper.Map<UserAdminDTO>(currentUser);
+                adminUserResponse.UserId = currentUser.Id;
                 adminUserResponse.Submissons = submissionResponseDTO;
                 adminUserResponse.Roles = [.. searchUserRoles];
                 return adminUserResponse;
@@ -80,6 +82,7 @@ namespace JudgeAPI.Application.Features.Users.Services
 
             // Si un usuario Admin o no admin, busca el profile de otro usuario
             UserPublicDTO publicUserResponse = _mapper.Map<UserPublicDTO>(currentUser);
+            publicUserResponse.UserId = currentUser.Id;
             publicUserResponse.Roles = [.. searchUserRoles];
             publicUserResponse.Submissons = submissionResponseDTO;
             return publicUserResponse;

@@ -20,12 +20,12 @@ namespace JudgeAPI.Infrastructure.Persistence.Repositories.RefreshToken
             return result;
         } 
 
-        public async Task AddAsync(UserRefreshToken refreshToken)
+        public void Add(UserRefreshToken refreshToken)
         {
-            await _dbContext.UserRefreshTokens.AddAsync(refreshToken);
+            _dbContext.UserRefreshTokens.Add(refreshToken);
         }
 
-        public async Task UpdateAsync(UserRefreshToken refreshToken)
+        public void Update(UserRefreshToken refreshToken)
         {
             _dbContext.UserRefreshTokens.Update(refreshToken);
         }

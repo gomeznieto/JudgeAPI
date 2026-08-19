@@ -8,8 +8,8 @@ namespace JudgeAPI.Infrastructure.Seed
     {
         public static async Task SeedAdminAsync(UserManager<ApplicationUser> userManager)
         {
-            string? adminEmail = Environment.GetEnvironmentVariable("ADMIN_MAIL") ?? "admin@mail.com";
-            string? adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "superfuerteysecreto123!";
+            string? adminEmail = Environment.GetEnvironmentVariable("ADMIN_MAIL");
+            string? adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
             if (string.IsNullOrWhiteSpace(adminPassword) || string.IsNullOrEmpty(adminEmail))
             {
