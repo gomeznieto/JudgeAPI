@@ -1,0 +1,3 @@
+### Healthcheck
+GET {{API_URL}}/api/health
+Content-Type: appliation/json

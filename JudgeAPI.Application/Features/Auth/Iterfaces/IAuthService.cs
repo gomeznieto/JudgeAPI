@@ -7,6 +7,6 @@ namespace JudgeAPI.Application.Features.Auth.Iterfaces
     {
         Task<TokenResponseDTO> LoginAsync(LoginRequestDTO request);
         Task<TokenResponseDTO> RegisterAsync(UserCreateDTO dto);
-        Task<TokenResponseDTO> RefreshTokenAsync(TokenRequestDTO dto);
+        Task<TokenResponseDTO> RefreshTokenAsync(TokenRequestDTO dto, string? currentUserId);
     }
 }

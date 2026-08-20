@@ -1,0 +1,41 @@
+
+### LOGIN
+POST {{API_URL}}/api/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "{{ADMIN}}",
+  "password": "{{ADMIN_PASS}}"
+}
+
+> {%
+  client.global.set("ADMIN_TOKEN", response.body.token);
+  client.global.set("ADMIN_REFRESH_TOKEN", response.body.refreshToken);
+  client.global.set("ADMIN_ID", response.body.userId);
+%}
+
+
+### UPDATE_USER_ROLE
+PUT {{API_URL}}/api/user/{{USER_ID}}/roles
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+{
+  "roles": ["Student", "Admin"]
+}
+
+
+### ALL_USERS
+GET {{API_URL}}/api/user/all
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+
+### ALL_ROLES
+GET {{API_URL}}/api/user/roles
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{ADMIN_TOKEN}}

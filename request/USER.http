@@ -1,0 +1,76 @@
+### REGISTER
+POST {{API_URL}}/api/auth/register
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "{{USER}}",
+  "password": "{{USER_PASS}}"
+}
+
+
+### LOGIN
+POST {{API_URL}}/api/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "{{USER}}",
+  "password": "{{USER_PASS}}"
+}
+
+> {%
+  client.global.set("TOKEN", response.body.token);
+  client.global.set("REFRESH_TOKEN", response.body.refreshToken);
+  client.global.set("USER_ID", response.body.userId);
+%}
+
+### REFRESH_TOKEN
+POST {{API_URL}}/api/auth/refresh
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{TOKEN}}
+
+{
+  "token": "{{TOKEN}}",
+  "refreshToken": "{{REFRESH_TOKEN}}"
+}
+
+> {%
+  client.global.set("TOKEN", response.body.token);
+  client.global.set("REFRESH_TOKEN", response.body.refreshToken);
+%}
+
+### BYID
+GET {{API_URL}}/api/user/{{USER_ID}}
+Authorization: Bearer {{TOKEN}}
+
+
+### ME
+GET {{API_URL}}/api/user/me
+Authorization: Bearer {{TOKEN}}
+
+
+### PUT_USER
+PUT {{API_URL}}/api/user/{{USER_ID}}
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{TOKEN}}
+
+{
+  "firstName": "Alejandro",
+    "lastName": "Doe",
+    "university": "UTN",
+}
+
+
+### CHANGE_PASSWORD
+PUT {{API_URL}}/api/user/change-password
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{TOKEN}}
+
+{
+  "oldPassword": "{{USER_PASS}}",
+  "newPassword": "{{USER_PASS}}"
+}

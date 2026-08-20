@@ -1,0 +1,36 @@
+### GET_ALL_UNITS
+GET {{API_URL}}/api/units
+Authorization: Bearer {{TOKEN}}
+
+
+### CREATE_UNIT
+POST {{API_URL}}/api/units
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+{
+  "name": "Unit 1",
+  "number": 1,
+  "description": "This is the first unit."
+}
+
+
+### GET_UNIT_BY_ID
+GET {{API_URL}}/api/units/1
+Authorization: Bearer {{TOKEN}}
+
+
+### UPDATE_UNIT
+PUT {{API_URL}}/api/units/1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+{
+  "id": 1,
+  "name": "Updated Unit 1",
+  "number": 1,
+  "description": "This is the updated first unit."
+}
+

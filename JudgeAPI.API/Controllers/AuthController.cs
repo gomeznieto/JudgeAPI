@@ -4,6 +4,7 @@ using JudgeAPI.Application.Features.Auth.Iterfaces;
 using JudgeAPI.Application.Features.Users.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace JudgeAPI.API.Controllers
 {
@@ -46,11 +47,19 @@ namespace JudgeAPI.API.Controllers
             return Ok();
         }
 
-        [AllowAnonymous]
-        [HttpPost("refresh-token")]
+        [Authorize]
+        [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken(TokenRequestDTO dto)
         {
-            TokenResponseDTO result = await _authService.RefreshTokenAsync(dto);
+            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine($"Refresh token request received: {dto.RefreshToken}");
+
+            if (currentUserId is null)
+            {
+                return BadRequest("User ID not found in claims.");
+            }
+
+            TokenResponseDTO result = await _authService.RefreshTokenAsync(dto, currentUserId);
             return Ok(result);
         }
 

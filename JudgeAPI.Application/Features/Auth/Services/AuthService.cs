@@ -75,15 +75,13 @@ namespace JudgeAPI.Application.Features.Auth.Services
       string token = _tokenService.GenerateToken(newUser.Id, newUser.UserName, roles!);
       string refreshToken = _tokenService.GenerateRefreshToken();
       
-      Console.ForegroundColor = ConsoleColor.Green;
-      Console.WriteLine($"[AuthService] Token generado para el usuario {newUser.Id}: {token
-}");
       UserRefreshToken userRefreshToken = new()
       {
         UserId = Guid.Parse(newUser.Id),
         TokenHash = _tokenService.GetHashToken(refreshToken),
         ExpiresAt = DateTime.UtcNow.AddDays(7),
-        IsRevoked = false
+        IsRevoked = false,
+        RevokedAt = null
       };
 
       _refreshTokenRepository.Add(userRefreshToken);
@@ -120,13 +118,14 @@ namespace JudgeAPI.Application.Features.Auth.Services
       string refreshToken = _tokenService.GenerateRefreshToken();
       List<Submission> submissionList = await _submissionRepository.GetAllByUserIdAsync(user.Id);
 
-            // Guardamos el token de actualización en la base de datos
+      // Genera un token refresh para la sesión del usuario y lo guarda en la base de datos
       UserRefreshToken userRefreshToken = new()
       {
         UserId = Guid.Parse(user.Id),
         TokenHash = _tokenService.GetHashToken(refreshToken),
         ExpiresAt = DateTime.UtcNow.AddDays(7),
-        IsRevoked = false
+        IsRevoked = false,
+        RevokedAt = null
       };
 
       _refreshTokenRepository.Add(userRefreshToken);
@@ -145,49 +144,56 @@ namespace JudgeAPI.Application.Features.Auth.Services
     }
 
     // ---- REFRESH TOKEN ---- //
-    // Implementa Refresh Token Rotation:
-    // 1. Valida y revoca el token actual (un solo uso).
-    // 2. Emite y persiste un nuevo par (Access + Refresh Token) para mitigar robo o reutilización.
-    public async Task<TokenResponseDTO> RefreshTokenAsync(TokenRequestDTO dto)
+    public async Task<TokenResponseDTO> RefreshTokenAsync(TokenRequestDTO dto, string userId)
     {
-      // Obtenemos los Claims
-      IEnumerable<Claim> userClaims = _tokenService.GetPrincipalFromExpiredToken(dto.Token).Claims;
-      string? userId = userClaims.FirstOrDefault(static c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
-      if (string.IsNullOrEmpty(userId))
-      {
-        throw new Exception("No se pudo obtener la información del usuario.");
-      }
-
       // Obtenemos el usuario de la base de datos
-      UserDTO user = await _identityService.FindByIdAsync(userId) ?? throw new Exception("Usuario no encontrado");
+      UserDTO user = await _identityService.FindByIdAsync(userId) ?? throw new Exception("User not found");
 
       // Parseamos el token de actualización para obtener el hash
       string parseToken = _tokenService.GetHashToken(dto.RefreshToken);
 
-      // Validamos que la expiración dele RefreshToken no esté vencida
-      UserRefreshToken? userRefreshToken = await _refreshTokenRepository.GetByUserIdAndHashAsync(userId, parseToken) ?? throw new UnauthorizedAccessException("Error: ID de usuario o token de actualización no válidos.");
+      // Obtenemos el token de actualización de la base de datos
+      UserRefreshToken? userRefreshToken = await _refreshTokenRepository.GetByUserIdAndHashAsync(userId, parseToken) ?? throw new UnauthorizedAccessException("Error: User ID or Refresh Token is invalid.");
 
-      if (userRefreshToken.ExpiresAt < DateTime.UtcNow || userRefreshToken.IsRevoked)
+      // Validamos si el token de actualización está revocado o expirado
+      if(userRefreshToken.IsRevoked)
       {
-        throw new UnauthorizedAccessException("Error: Token de actualización expirado o revocado.");
+        // Verificamos si estamos dentro del período de gracia de 30 segundos para evitar Race Conditions.
+        var isWhitingGracePeriod = userRefreshToken.RevokedAt.HasValue && DateTime.UtcNow < userRefreshToken.RevokedAt.Value.AddSeconds(30);
+
+        if (!isWhitingGracePeriod)
+        {
+          throw new UnauthorizedAccessException("Error: Token is revoked.");
+        }
+      }
+
+      if (userRefreshToken.ExpiresAt < DateTime.UtcNow)
+      {
+        throw new UnauthorizedAccessException("Error: Token is expired.");
       }
 
       // Marcamos el token de actualización como revocadoj
       userRefreshToken.ExpiresAt = DateTime.UtcNow;
       userRefreshToken.IsRevoked = true;
+      userRefreshToken.RevokedAt = DateTime.UtcNow;
 
       _refreshTokenRepository.Update(userRefreshToken);
 
       // Generamos un nuevo token y refresh token
       IList<string> roles = await _identityService.GetRoleAsync(user) ?? [];
-      string refreshToken = _tokenService.GenerateRefreshToken();
       string newToken = _tokenService.GenerateToken(user.Id, user.UserName, roles);
+      string refreshToken = _tokenService.GenerateRefreshToken();
 
-      // Actualizamos el token de actualización en la base de datos
-      userRefreshToken.TokenHash = _tokenService.GetHashToken(refreshToken);
-      userRefreshToken.ExpiresAt = DateTime.UtcNow.AddDays(7);
-      _refreshTokenRepository.Add(userRefreshToken);
+      // Guardamos el nuevo token de actualización en la base de datos
+      UserRefreshToken newUserRefreshToken = new()
+      {
+        UserId = Guid.Parse(user.Id),
+        TokenHash = _tokenService.GetHashToken(refreshToken),
+        ExpiresAt = DateTime.UtcNow.AddDays(7),
+        IsRevoked = false
+      };
+
+      _refreshTokenRepository.Add(newUserRefreshToken);
 
       await _unitOfWork.SaveChangesAsync();
 
@@ -206,6 +212,6 @@ namespace JudgeAPI.Application.Features.Auth.Services
 
     }
 
-  }
+}
 
 }
